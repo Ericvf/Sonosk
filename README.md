@@ -2,6 +2,8 @@
 
 Sonosk is a modern WPF application for discovering, controlling, and managing Sonos devices on your local network. Built with .NET 9 and leveraging advanced asynchronous programming, Sonosk provides a fast, responsive, and privacy-focused experience for interacting with Sonos speakers and groups—without relying on cloud services or external APIs.
 
+![Screenshot](https://github.com/Ericvf/Sonosk/blob/8867a8f4cd4bad7f9eae25ed3e986cfe08344a05/screenshot.png)
+
 ---
 
 ## Key Features
