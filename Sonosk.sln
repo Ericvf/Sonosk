@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36414.22
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sonosk", "Sonosk\Sonosk.csproj", "{8F4B9B62-329C-4DCF-BA48-DB5BF8EBC21A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnimationExtensions", "AnimationExtensions\AnimationExtensions.csproj", "{5AFC159C-5E8B-E970-38BB-6345146C851A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8F4B9B62-329C-4DCF-BA48-DB5BF8EBC21A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F4B9B62-329C-4DCF-BA48-DB5BF8EBC21A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F4B9B62-329C-4DCF-BA48-DB5BF8EBC21A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F4B9B62-329C-4DCF-BA48-DB5BF8EBC21A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5AFC159C-5E8B-E970-38BB-6345146C851A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AFC159C-5E8B-E970-38BB-6345146C851A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AFC159C-5E8B-E970-38BB-6345146C851A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AFC159C-5E8B-E970-38BB-6345146C851A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {74D05364-6549-434B-A92E-7DC971298815}
+	EndGlobalSection
+EndGlobal
