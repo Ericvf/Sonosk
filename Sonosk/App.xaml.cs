@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Sonosk;
 using Sonosk.Sonos;
 using Sonosk.TrayIcon;
 using Sonosk.ViewModel;
@@ -21,6 +20,7 @@ namespace Sonosk
             services.AddSingleton<MainViewModel>();
             services.AddTransient<GroupViewModel>();
             services.AddTransient<DeviceViewModel>();
+            services.AddTransient<SingleEventTimer>();
 
             services.AddTransient<TrayIconService>();
             var serviceProvider = services.BuildServiceProvider();

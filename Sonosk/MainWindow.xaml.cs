@@ -1,6 +1,7 @@
 ﻿using AnimationExtensions;
 using Sonosk.ViewModel;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace Sonosk
 {
@@ -36,6 +37,7 @@ namespace Sonosk
         protected async override void OnInitialized(EventArgs e)
         {
             base.OnInitialized(e);
+          //  await mainViewModel.Refresh(1);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -57,13 +59,17 @@ namespace Sonosk
         {
             if (!isVisiblityToggle)
             {
-                isVisiblityToggle = true;
                 hideAnimation?.Stop();
                 showAnimation?.Stop();
                 showAnimation = LayoutRoot
                     .Fade(0, 300, Eq.OutSine)
                     .Move(0, 100, 200, Eq.InBack)
-                    .ThenDo(d => Hide())
+                    .Wait(100)
+                    .ThenDo(d =>
+                    {
+                        Hide();
+                        isVisiblityToggle = true;
+                    })
                 .Play();
             }
         }
@@ -84,7 +90,7 @@ namespace Sonosk
                     .Move(0, 0, 200, Eq.OutBack)
                     .Play();
 
-                mainViewModel.Initialize();
+                mainViewModel.Refresh(2);
             }
         }
     }

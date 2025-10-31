@@ -5,19 +5,20 @@ namespace Sonosk.ViewModel
 {
     public class GroupViewModel : BaseViewModel
     {
-        private SingleEventTimer singleEventTimer = new SingleEventTimer();
+        private readonly SingleEventTimer singleEventTimer;
         private readonly SonosDiscoverService? sonosDiscoverService;
 
         public ObservableCollection<DeviceViewModel> Devices { get; } = new ObservableCollection<DeviceViewModel>();
 
         public GroupViewModel()
         {
-            
+
         }
 
-        public GroupViewModel(SonosDiscoverService sonosDiscoverService)
+        public GroupViewModel(SonosDiscoverService sonosDiscoverService, SingleEventTimer singleEventTimer)
         {
             this.sonosDiscoverService = sonosDiscoverService;
+            this.singleEventTimer = singleEventTimer;
         }
 
         private string? groupName;
@@ -63,26 +64,45 @@ namespace Sonosk.ViewModel
                 if (volume != value)
                 {
                     volume = value;
-                    SetVolume(volume);
                     OnPropertyChanged(nameof(Volume));
+                    SetVolume(volume);
                 }
             }
         }
 
-        public SonosDevice? Coordinator { get; set; }
+   //     public SonosDevice? Coordinator { get; set; }
 
         public override string ToString()
         {
-            return $"{GroupName} (Coordinator: {Coordinator}, ID: {Id})";
+            return $"{GroupName}";
         }
 
         private void SetVolume(int volume)
         {
-            if (Coordinator != null)
+          //  if (Coordinator != null)
             {
                 singleEventTimer.Queue(100, async () =>
                 {
-                    await sonosDiscoverService.SetGroupVolume(Coordinator, volume);
+                    //await sonosDiscoverService.SetGroupVolume(Coordinator, volume);
+
+                    var devices = Devices.Where(d => d.Device != null).ToArray();
+                    double avg = devices.Average(d => d.Volume);
+                    if (avg == 0)
+                    {
+                        foreach (var d in devices)
+                            d.SetVolumeFromGroup(volume);
+                    }
+                    else
+                    {
+                        double scale = volume / avg;
+
+                        foreach (var d in devices)
+                        {
+                            int newVol = (int)Math.Round(d.Volume * scale);
+                            newVol = Math.Clamp(newVol, 0, 100);
+                            d.SetVolumeFromGroup(newVol);
+                        }
+                    }
                 });
             }
         }
@@ -99,9 +119,24 @@ namespace Sonosk.ViewModel
             Volume = newVolume;
         }
 
-        public void InitVolume(int volume)
+        public void SetVolumeUI(int volume)
         {
             this.volume = volume;
+            OnPropertyChanged(nameof(Volume));
+        }
+
+        public void CalculateVolumeUI()
+        {
+            var devices = Devices.Where(d => d.Device != null).ToArray();
+            if (devices.Length == 0)
+            {
+                Volume = 0;
+                return;
+            }
+
+            double avg = devices.Average(d => d.Volume);
+            var volume = Math.Clamp((int)Math.Round(avg), 0, 100);
+            SetVolumeUI(volume);
         }
     }
 }

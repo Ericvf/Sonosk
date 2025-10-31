@@ -35,7 +35,7 @@ namespace Sonosk.Sonos
             return lanIP;
         }
 
-        public async IAsyncEnumerable<SonosDevice> Discover([EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<SonosDevice> Discover(int timeout = 5, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             using Socket udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             udpSocket.Bind(localEndPoint);
@@ -52,7 +52,7 @@ namespace Sonosk.Sonos
             byte[] receiveBuffer = new byte[64000];
 
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            cts.CancelAfter(TimeSpan.FromSeconds(2));
+            cts.CancelAfter(TimeSpan.FromSeconds(timeout));
 
             while (true)
             {

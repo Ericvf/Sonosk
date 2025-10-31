@@ -4,16 +4,17 @@ namespace Sonosk.ViewModel
 {
     public class DeviceViewModel : BaseViewModel
     {
-        private SingleEventTimer singleEventTimer = new SingleEventTimer();
+        private readonly SingleEventTimer singleEventTimer;
         private readonly SonosDiscoverService sonosDiscoverService;
 
         public DeviceViewModel()
         {
         }
 
-        public DeviceViewModel(SonosDiscoverService sonosDiscoverService)
+        public DeviceViewModel(SonosDiscoverService sonosDiscoverService, SingleEventTimer singleEventTimer)
         {
             this.sonosDiscoverService = sonosDiscoverService;
+            this.singleEventTimer = singleEventTimer;
         }
 
         public SonosDevice? Device { get; set; }
@@ -44,24 +45,40 @@ namespace Sonosk.ViewModel
                 if (volume != value)
                 {
                     volume = value;
-                    SetVolume(volume);
                     OnPropertyChanged(nameof(Volume));
+                    SetVolume(volume, true);
                 }
             }
         }
 
-        public void InitVolume(int volume)
+        public GroupViewModel Group { get; set; }
+
+        public string DeviceId { get; set; }
+
+        public void SetVolumeUI(int volume)
         {
             this.volume = volume;
+            OnPropertyChanged(nameof(Volume));
         }
 
-        private void SetVolume(int volume)
+        public void SetVolumeFromGroup(int volume)
+        {
+            this.volume = volume;
+            OnPropertyChanged(nameof(Volume));
+            SetVolume(volume, false);
+        }
+
+        public async void SetVolume(int volume, bool calculateGroup = false)
         {
             if (Device != null)
             {
                 singleEventTimer.Queue(100, async () =>
                 {
                     await sonosDiscoverService.SetVolume(Device, volume);
+                    if (Group != null && calculateGroup)
+                    {
+                        Group.CalculateVolumeUI();
+                    }
                 });
             }
         }

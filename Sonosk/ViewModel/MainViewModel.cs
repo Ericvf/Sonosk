@@ -91,118 +91,170 @@ namespace Sonosk.ViewModel
 
         private async void RefreshHandler(object obj)
         {
-            await DiscoveryAndUpdate();
+            await Refresh(5);
         }
 
         #endregion
-        public async Task Initialize()
+
+        public async Task Refresh(int timeout = 5)
         {
-            await DiscoveryAndUpdate();
+            await DiscoveryAndUpdate(timeout);
         }
 
-        public async Task DiscoveryAndUpdate()
+        private async Task DiscoveryAndUpdate(int timeout = 5)
         {
             if (!isLoading)
             {
                 IsLoading = true;
 
-                var deviceDiscovery = sonosDiscoverService.Discover(CancellationToken.None);
+                await UpdateAllVolumes();
+
+                var deviceDiscovery = sonosDiscoverService.Discover(timeout, CancellationToken.None);
                 var devices = new List<SonosDevice>();
+                var hasZoneTopology = false;
+
                 await foreach (var device in deviceDiscovery)
                 {
-                    devices.Add(device);
-                }
-
-                var coordinatorDevice = devices.FirstOrDefault(d =>
-                    d.Services.Any(s => s.ServiceId == "urn:upnp-org:serviceId:ZoneGroupTopology"));
-
-                if (coordinatorDevice != null)
-                {
-                    var zone = await sonosDiscoverService.GetZone(coordinatorDevice);
-                    foreach (var group in zone.ZoneGroups.OrderBy(z => z.ID))
+                    if (!hasZoneTopology)
                     {
-                        var groupName = string.Join(", ", group.ZoneGroupMember.Select(m => m.ZoneName).ToArray());
-
-                        var existingGroup = Groups.SingleOrDefault(g => g.Id == group.ID);
-                        if (existingGroup != null)
+                        var coordinatorDevice = device.Services.Any(s => s.ServiceId == "urn:upnp-org:serviceId:ZoneGroupTopology");
+                        if (coordinatorDevice)
                         {
-                            existingGroup.GroupName = groupName;
-                            existingGroup.Coordinator = devices.FirstOrDefault(d => d.UDN.Substring(5) == group.Coordinator);
-
-                            foreach (var groupMember in group.ZoneGroupMember)
+                            var zone = await sonosDiscoverService.GetZone(device);
+                            foreach (var group in zone.ZoneGroups.OrderBy(z => z.ID))
                             {
-                                var existingDevice = existingGroup.Devices.SingleOrDefault(d => d.Name == groupMember.ZoneName);
-                                if (existingDevice == null)
+                                var groupName = string.Join(", ", group.ZoneGroupMember.Select(m => m.ZoneName).ToArray());
+
+                                var existingGroup = Groups.SingleOrDefault(g => g.Id == group.ID);
+                                if (existingGroup != null)
                                 {
-                                    // TODO: Refactor to avoid code duplication
-                                    var memberViewModel = viewModelFactory.Create<DeviceViewModel>();
-                                    memberViewModel.Name = groupMember.ZoneName;
-                                    memberViewModel.Device = devices.FirstOrDefault(d => d.UDN.Substring(5) == groupMember.UUID);
-                                    if (memberViewModel.Device != null)
+                                    existingGroup.GroupName = groupName;
+                                    //existingGroup.Coordinator = devices.FirstOrDefault(d => d.UDN.Substring(5) == group.Coordinator);
+
+                                    foreach (var groupMember in group.ZoneGroupMember)
                                     {
-                                        var volume = await sonosDiscoverService.GetVolume(memberViewModel.Device);
-                                        memberViewModel.InitVolume(volume);
+                                        var existingDevice = existingGroup.Devices.SingleOrDefault(d => d.Name == groupMember.ZoneName);
+                                        if (existingDevice == null)
+                                        {
+                                            // TODO: Refactor to avoid code duplication
+                                            var memberViewModel = viewModelFactory.Create<DeviceViewModel>();
+                                            memberViewModel.Name = groupMember.ZoneName;
+                                            memberViewModel.DeviceId = groupMember.UUID;
+                                            memberViewModel.Device = devices.FirstOrDefault(d => d.UDN.Substring(5) == groupMember.UUID);
+                                            if (memberViewModel.Device != null)
+                                            {
+                                                var volume = await sonosDiscoverService.GetVolume(memberViewModel.Device);
+                                                memberViewModel.SetVolumeUI(volume);
+                                            }
+                                            existingGroup.Devices.Add(memberViewModel);
+                                            memberViewModel.Group = existingGroup;
+                                        }
+                                        else
+                                        {
+                                            existingDevice.Name = groupMember.ZoneName;
+                                            existingDevice.Group = existingGroup;
+                                        }
                                     }
-                                    existingGroup.Devices.Add(memberViewModel);
+
+                                    var membersToRemove = existingGroup.Devices
+                                        .Where(d => !group.ZoneGroupMember.Any(m => m.ZoneName == d.Name))
+                                        .ToArray();
+
+                                    foreach (var memberToRemove in membersToRemove)
+                                    {
+                                        existingGroup.Devices.Remove(memberToRemove);
+                                    }
                                 }
                                 else
                                 {
-                                    existingDevice.Name = groupMember.ZoneName;
+                                    var groupViewModel = viewModelFactory.Create<GroupViewModel>();
+                                    groupViewModel.Id = group.ID;
+                                    groupViewModel.GroupName = groupName;
+                                    //groupViewModel.Coordinator = devices.FirstOrDefault(d => d.UDN.Substring(5) == group.Coordinator);
+
+                                    //if (groupViewModel.Coordinator != null)
+                                    //{
+                                    //    var volume = await sonosDiscoverService.GetGroupVolume(groupViewModel.Coordinator);
+                                    //    groupViewModel.SetVolumeUI(volume);
+                                    //}
+
+                                    foreach (var groupMember in group.ZoneGroupMember)
+                                    {
+                                        var memberViewModel = viewModelFactory.Create<DeviceViewModel>();
+                                        memberViewModel.Name = groupMember.ZoneName;
+                                        memberViewModel.DeviceId = groupMember.UUID;
+                                        //memberViewModel.Device = devices.FirstOrDefault(d => d.UDN.Substring(5) == groupMember.UUID);
+                                        //if (memberViewModel.Device != null)
+                                        //{
+                                        //    var volume = await sonosDiscoverService.GetVolume(memberViewModel.Device);
+                                        //    memberViewModel.SetVolumeUI(volume);
+                                        //}
+
+                                        memberViewModel.Group = groupViewModel;
+                                        groupViewModel.Devices.Add(memberViewModel);
+                                    }
+
+
+                                    Groups.Add(groupViewModel);
                                 }
                             }
 
-                            var membersToRemove = existingGroup.Devices
-                                .Where(d => !group.ZoneGroupMember.Any(m => m.ZoneName == d.Name))
+                            var groupsToRemove = Groups
+                                .Where(g => !zone.ZoneGroups.Any(z => z.ID == g.Id))
                                 .ToArray();
 
-                            foreach (var memberToRemove in membersToRemove)
+                            foreach (var groupToRemove in groupsToRemove)
                             {
-                                existingGroup.Devices.Remove(memberToRemove);
-                            }
-                        }
-                        else
-                        {
-                            var groupViewModel = viewModelFactory.Create<GroupViewModel>();
-                            groupViewModel.Id = group.ID;
-                            groupViewModel.GroupName = groupName;
-                            groupViewModel.Coordinator = devices.FirstOrDefault(d => d.UDN.Substring(5) == group.Coordinator);
-
-                            if (groupViewModel.Coordinator != null)
-                            {
-                                var volume = await sonosDiscoverService.GetGroupVolume(groupViewModel.Coordinator);
-                                groupViewModel.InitVolume(volume);
+                                Groups.Remove(groupToRemove);
                             }
 
-                            foreach (var groupMember in group.ZoneGroupMember)
-                            {
-                                var memberViewModel = viewModelFactory.Create<DeviceViewModel>();
-                                memberViewModel.Name = groupMember.ZoneName;
-
-                                memberViewModel.Device = devices.FirstOrDefault(d => d.UDN.Substring(5) == groupMember.UUID);
-                                if (memberViewModel.Device != null)
-                                {
-                                    var volume = await sonosDiscoverService.GetVolume(memberViewModel.Device);
-                                    memberViewModel.InitVolume(volume);
-                                }
-
-                                groupViewModel.Devices.Add(memberViewModel);
-                            }
-
-                            Groups.Add(groupViewModel);
+                            hasZoneTopology = true;
                         }
                     }
 
-                    var groupsToRemove = Groups
-                        .Where(g => !zone.ZoneGroups.Any(z => z.ID == g.Id))
-                        .ToArray();
+                    devices.Add(device);
+                }
 
-                    foreach (var groupToRemove in groupsToRemove)
+                foreach (var groupViewModel in Groups)
+                {
+                    foreach (var deviceViewModel in groupViewModel.Devices)
                     {
-                        Groups.Remove(groupToRemove);
+                        if (deviceViewModel.Device == null && deviceViewModel.DeviceId != null)
+                        {
+                            deviceViewModel.Device = devices.FirstOrDefault(d => d.UDN.Substring(5) == deviceViewModel.DeviceId);
+                        }
                     }
                 }
 
+                await UpdateAllVolumes();
+
                 IsLoading = false;
+            }
+        }
+
+        private async Task UpdateAllVolumes()
+        {
+            var deviceTasks = Groups
+                .SelectMany(g => g.Devices)
+                .Where(d => d.Device != null)
+                .Select(async d =>
+                {
+                    var volume = await sonosDiscoverService.GetVolume(d.Device);
+                    d.SetVolumeUI(volume);
+                });
+
+            //var groupTasks = Groups
+            //    //.Where(g => g.Coordinator != null)
+            //    .Select(async g =>
+            //    {
+            //        var volume = await sonosDiscoverService.GetGroupVolume(g.Coordinator);
+            //        g.SetVolumeUI(volume);
+            //    });
+
+            await Task.WhenAll(deviceTasks);
+            foreach (var group in Groups)
+            {
+                group.CalculateVolumeUI();
             }
         }
 
