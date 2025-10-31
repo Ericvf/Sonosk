@@ -127,7 +127,7 @@ namespace Sonosk.ViewModel
 
         public void CalculateVolumeUI()
         {
-            var devices = Devices.Where(d => d.Device != null).ToArray();
+            var devices = Devices.ToArray();
             if (devices.Length == 0)
             {
                 Volume = 0;
