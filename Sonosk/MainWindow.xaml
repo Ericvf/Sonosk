@@ -18,22 +18,34 @@
 
     <!-- Resources -->
     <Window.Resources>
-        <LinearGradientBrush x:Key="FancyOrangeVerticalBrush"
+        <!--<LinearGradientBrush x:Key="MidnightGlassSoftBrush"
                              StartPoint="0,0"
                              EndPoint="0,1">
-            <GradientStop Color="#FFFFF6C0"
+            --><!-- Bright, soft top --><!--
+            <GradientStop Color="#FFDDE6FF"
                           Offset="0.0" />
-            <GradientStop Color="#FFFFD080"
-                          Offset="0.15" />
-            <GradientStop Color="#FFFFA000"
-                          Offset="0.35" />
-            <GradientStop Color="#FFFF7A00"
-                          Offset="0.55" />
-            <GradientStop Color="#FFCC5A00"
-                          Offset="0.7" />
-            <GradientStop Color="#FF552000"
+            --><!-- very pale blue-lavender --><!--
+            <GradientStop Color="#FFBBCDFF"
+                          Offset="0.25" />
+            --><!-- soft pastel periwinkle -->
+
+            <!-- Vibrant mid glow --><!--
+            <GradientStop Color="#FF7F7FFF"
+                          Offset="0.45" />
+            --><!-- saturated bright purple-blue --><!--
+            <GradientStop Color="#FF5F5FFF"
+                          Offset="0.6" />
+            --><!-- deeper, vivid violet -->
+
+            <!-- Bold lower fade --><!--
+            <GradientStop Color="#FF3F3FAF"
+                          Offset="0.8" />
+            --><!-- deep saturated purple --><!--
+            <GradientStop Color="#FF1A1A5A"
                           Offset="1.0" />
-        </LinearGradientBrush>
+            --><!-- rich dark midnight blue --><!--
+        </LinearGradientBrush>-->
+
 
         <LinearGradientBrush x:Key="AmberGlassBrush"
                              StartPoint="0,0"
@@ -70,6 +82,43 @@
             <GradientStop Color="#FFE08C50"
                           Offset="0.8" />
             <GradientStop Color="#FF6A3C1A"
+                          Offset="1.0" />
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="FancyOrangeVerticalBrush"
+                             StartPoint="0,0"
+                             EndPoint="0,1">
+            <GradientStop Color="#FFFFF6C0"
+                          Offset="0.0" />
+            <GradientStop Color="#FFFFD080"
+                          Offset="0.15" />
+            <GradientStop Color="#FFFFA000"
+                          Offset="0.35" />
+            <GradientStop Color="#FFFF7A00"
+                          Offset="0.55" />
+            <GradientStop Color="#FFCC5A00"
+                          Offset="0.7" />
+            <GradientStop Color="#FF552000"
+                          Offset="1.0" />
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="GrayGlassSoftBrush"
+                             StartPoint="0,0"
+                             EndPoint="0,1">
+            <!-- Soft light top -->
+            <GradientStop Color="#FFF6F6F6"
+                          Offset="0.0" />
+            <GradientStop Color="#FFE4E4E4"
+                          Offset="0.25" />
+
+            <!-- Gentle mid gray -->
+            <GradientStop Color="#FFCACACA"
+                          Offset="0.45" />
+            <GradientStop Color="#FFB0B0B0"
+                          Offset="0.6" />
+
+            <!-- Mild lower fade -->
+            <GradientStop Color="#FF8C8C8C"
+                          Offset="0.8" />
+            <GradientStop Color="#FF3C3C3C"
                           Offset="1.0" />
         </LinearGradientBrush>
 
@@ -125,6 +174,26 @@
             <Setter Property="BorderBrush"
                     Value="Black" />
         </Style>
+        <!-- ProgressBar style with vertical gradient -->
+        <Style TargetType="ProgressBar"
+               x:Key="SelectedGradientProgressBar">
+            <Setter Property="Foreground"
+                    Value="{StaticResource FancyOrangeVerticalBrush}">
+            </Setter>
+            <Setter Property="Background"
+                    Value="{StaticResource CharcoalGlassBrush}" />
+            <Setter Property="Height"
+                    Value="20" />
+            <Setter Property="BorderThickness"
+                    Value="0" />
+            <Setter Property="BorderBrush"
+                    Value="Black" />
+        </Style>
+
+
+        <wpf:SelectedStyleMultiConverter x:Key="ProgressBarStyleSelector"
+                                           NormalStyle="{StaticResource GradientProgressBar}"
+                                           SelectedStyle="{StaticResource SelectedGradientProgressBar}" />
     </Window.Resources>
 
     <!-- Main border with drop shadow -->
@@ -180,10 +249,17 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border BorderBrush="#444"
+                                CornerRadius="2"
                                 BorderThickness="1"
                                 Margin="0,0,0,20"
                                 Padding="10">
-                            <StackPanel>
+                            <StackPanel >
+                                <StackPanel.InputBindings>
+                                    <MouseBinding MouseAction="LeftClick"
+                                                  Command="{Binding DataContext.SelectDeviceCommand,
+                                        RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  CommandParameter="{Binding}" />
+                                </StackPanel.InputBindings>
                                 <!-- Room name and volume text -->
                                 <TextBlock Style="{StaticResource LightText}"
                                            FontFamily="Segoe UI Semibold"
@@ -196,24 +272,35 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
 
                                     <!-- Progress bar -->
                                     <Border BorderThickness="1"
-                                            Margin="0,0,5,0"
+                                            Margin="0,0,5,0" 
                                             BorderBrush="Black">
 
-                                        <ProgressBar Style="{StaticResource GradientProgressBar}"
-                                                     wpf:SliderExtensions.EnableMouseWheel="True"
+                                        <ProgressBar wpf:SliderExtensions.EnableMouseWheel="True"
                                                      wpf:SliderExtensions.EnableDragging="True"
                                                      SmallChange="0.005"
                                                      Value="{Binding Volume, Mode=TwoWay}"
                                                      d:Value="50"
-                                                     Maximum="100" />
+                                                     Maximum="100">
+                                            <ProgressBar.Style>
+                                                <MultiBinding Converter="{StaticResource ProgressBarStyleSelector}">
+                                                    <!-- Current item -->
+                                                    <Binding />
+                                                    <!-- SelectedViewModel from Window DataContext -->
+                                                    <Binding Path="DataContext.SelectedViewModel"
+                                                             RelativeSource="{RelativeSource AncestorType=Window}" />
+                                                </MultiBinding>
+                                            </ProgressBar.Style>
+                                        </ProgressBar>
                                     </Border>
 
+
                                     <TextBlock Style="{StaticResource LightText}"
-                                               Grid.Column="1"
+                                               Grid.Column="2"
                                                Width="40"
                                                TextAlignment="Right">
                                     <Run Text="{Binding Volume, StringFormat={}{0}%}"
@@ -237,10 +324,18 @@
                                     </ItemsControl.Style>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Grid Margin="10,0,0,5">
+                                            <Grid Margin="0,0,0,5">
+                                                <Grid.InputBindings>
+                                                    <MouseBinding MouseAction="LeftClick"
+                                                                  Command="{Binding DataContext.SelectDeviceCommand,
+                                                                             RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                  CommandParameter="{Binding}" />
+                                                </Grid.InputBindings>
+                                                
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
 
@@ -258,17 +353,29 @@
                                                         Margin="5,0,5,0"
                                                         BorderBrush="Black">
                                                     <!-- Progress bar -->
-                                                    <ProgressBar Style="{StaticResource GradientProgressBar}"
-                                                                 wpf:SliderExtensions.EnableMouseWheel="True"
+                                                    <ProgressBar wpf:SliderExtensions.EnableMouseWheel="True"
                                                                  wpf:SliderExtensions.EnableDragging="True"
                                                                  SmallChange="0.005"
                                                                  Value="{Binding Volume, Mode=TwoWay}"
                                                                  d:Value="50"
-                                                                 Maximum="100" />
+                                                                 Maximum="100">
+                                                        <ProgressBar.Style>
+                                                            <MultiBinding Converter="{StaticResource ProgressBarStyleSelector}">
+                                                                <!-- Current item -->
+                                                                <Binding />
+                                                                <!-- SelectedViewModel from Window DataContext -->
+                                                                <Binding Path="DataContext.SelectedViewModel"
+                                                                         RelativeSource="{RelativeSource AncestorType=Window}" />
+                                                            </MultiBinding>
+                                                        </ProgressBar.Style>
+                                                    </ProgressBar>
+
+
                                                 </Border>
 
+                                                
                                                 <TextBlock Style="{StaticResource LightText}"
-                                                           Grid.Column="2"
+                                                           Grid.Column="3"
                                                            Width="40"
                                                            TextAlignment="Right">
                                                 <Run Text="{Binding Volume, StringFormat={}{0}%}"

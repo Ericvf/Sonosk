@@ -38,6 +38,34 @@ namespace Sonosk.ViewModel
             }
         }
 
+        private IGroupOrDeviceViewModel selectedViewModel;
+        public IGroupOrDeviceViewModel SelectedViewModel
+        {
+            get { return selectedViewModel; }
+            set
+            {
+                if (selectedViewModel != value)
+                {
+                    selectedViewModel = value;
+                    OnPropertyChanged(nameof(SelectedViewModel));
+                }
+            }
+        }
+
+        private string currentlyPlaying;
+        public string CurrentlyPlaying
+        {
+            get { return currentlyPlaying; }
+            set
+            {
+                if (currentlyPlaying != value)
+                {
+                    currentlyPlaying = value;
+                    OnPropertyChanged(nameof(CurrentlyPlaying));
+                }
+            }
+        }
+
         public ObservableCollection<GroupViewModel> Groups { get; } = new ObservableCollection<GroupViewModel>();
 
         public MainViewModel()
@@ -95,6 +123,27 @@ namespace Sonosk.ViewModel
             await Refresh(5);
         }
 
+        private ICommand selectDeviceCommand;
+
+        public ICommand SelectDeviceCommand
+        {
+            get
+            {
+                if (selectDeviceCommand == null)
+                {
+                    selectDeviceCommand = new RelayCommand<IGroupOrDeviceViewModel>(SelectDeviceHandler);
+                }
+
+                return selectDeviceCommand;
+            }
+        }
+
+        private async void SelectDeviceHandler(IGroupOrDeviceViewModel obj)
+        {
+            SelectedViewModel = obj;
+          
+        }
+
         #endregion
 
         public async Task Refresh(int timeout = 5)
@@ -141,6 +190,12 @@ namespace Sonosk.ViewModel
                 }
 
                 await UpdateAllVolumes();
+
+                //if (selectedViewModel?.BaseUri != null)
+                //{
+                //    var x = await sonosDiscoverService.GetCurrentTrack(selectedViewModel.BaseUri);
+                //    CurrentlyPlaying = x;
+                //}
 
                 IsLoading = false;
             }
@@ -256,14 +311,12 @@ namespace Sonosk.ViewModel
 
         public void IncreaseVolume(int v)
         {
-            Groups.Where(g => g.GroupName.Contains("Office")).SingleOrDefault()?.IncreaseVolume(v);
+            SelectedViewModel?.IncreaseVolume(v);
         }
 
         public void DecreaseVolume(int v)
         {
-
-            Groups.Where(g => g.GroupName.Contains("Office")).SingleOrDefault()?.DecreaseVolume(v);
-
+            SelectedViewModel?.DecreaseVolume(v);
         }
     }
 }

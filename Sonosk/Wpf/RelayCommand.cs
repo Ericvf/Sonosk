@@ -1,9 +1,31 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
+using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace Sonosk.Wpf
 {
+    public class SelectedStyleMultiConverter : IMultiValueConverter
+    {
+        public Style NormalStyle { get; set; }
+        public Style SelectedStyle { get; set; }
+
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            // values[0] = current item (Device or Group)
+            // values[1] = SelectedViewModel
+            if (values.Length < 2) return NormalStyle;
+            return ReferenceEquals(values[0], values[1]) ? SelectedStyle : NormalStyle;
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class RelayCommand : ICommand
     {
         #region Fields

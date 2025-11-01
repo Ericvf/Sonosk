@@ -37,7 +37,6 @@ namespace Sonosk
         protected async override void OnInitialized(EventArgs e)
         {
             base.OnInitialized(e);
-          //  await mainViewModel.Refresh(1);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -53,7 +52,6 @@ namespace Sonosk
             Left = screenWidth - Width;
             Top = screenHeight - Height;
         }
-
 
         private void IsDeactivated()
         {
@@ -78,6 +76,7 @@ namespace Sonosk
         {
             if (isVisiblityToggle)
             {
+                PositionWindowBottomRight();
                 isVisiblityToggle = false;
                 Show();
                 Activate();

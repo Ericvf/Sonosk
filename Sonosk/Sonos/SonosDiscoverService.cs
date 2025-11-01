@@ -345,6 +345,105 @@ namespace Sonosk.Sonos
                 })
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
         }
+
+        public async Task<string> GetCurrentTrack(string baseUri, uint instanceId = 0)
+        {
+            string soap = $@"<?xml version=""1.0"" encoding=""utf-8""?>
+<s:Envelope xmlns:s=""http://schemas.xmlsoap.org/soap/envelope/"">
+  <s:Body>
+    <u:GetPositionInfo xmlns:u=""urn:schemas-upnp-org:service:AVTransport:1"">
+      <InstanceID>{instanceId}</InstanceID>
+    </u:GetPositionInfo>
+  </s:Body>
+</s:Envelope>";
+
+            var uri = $"{baseUri}/MediaRenderer/AVTransport/Control";
+
+            var content = new StringContent(soap, Encoding.UTF8, "text/xml");
+            content.Headers.Add("SOAPAction", @"""urn:schemas-upnp-org:service:AVTransport:1#GetPositionInfo""");
+
+            var response = await httpClient.PostAsync(uri, content);
+            if (!response.IsSuccessStatusCode)
+                return "Unknown";
+
+            string xml = await response.Content.ReadAsStringAsync();
+            XDocument doc = XDocument.Parse(xml);
+            XNamespace u = "urn:schemas-upnp-org:service:AVTransport:1";
+
+            var positionInfo = doc.Descendants(u + "GetPositionInfoResponse").FirstOrDefault();
+            if (positionInfo == null)
+                return "Unknown";
+
+            string uriTrack = positionInfo.Element("TrackURI")?.Value ?? "";
+            string metadata = positionInfo.Element("TrackMetaData")?.Value ?? "";
+
+            if (!string.IsNullOrEmpty(metadata))
+            {
+                try
+                {
+                    var metaDoc = XDocument.Parse(metadata);
+                    XNamespace dc = "http://purl.org/dc/elements/1.1/";
+                    string title = metaDoc.Descendants(dc + "title").FirstOrDefault()?.Value;
+                    string artist = metaDoc.Descendants(dc + "creator").FirstOrDefault()?.Value;
+                    if (!string.IsNullOrEmpty(title))
+                        return !string.IsNullOrEmpty(artist) ? $"{title} — {artist}" : title;
+                }
+                catch { /* ignore parsing errors */ }
+            }
+
+            return uriTrack; // fallback
+        }
+
+        public async Task<MediaInfo?> GetMediaInfo(string deviceBaseUri, uint instanceId = 0)
+        {
+            string soap = $@"<?xml version=""1.0"" encoding=""utf-8""?><s:Envelope xmlns:s=""http://schemas.xmlsoap.org/soap/envelope/""><s:Body><u:GetMediaInfo xmlns:u=""urn:schemas-upnp-org:service:AVTransport:1""><InstanceID>{instanceId}</InstanceID></u:GetMediaInfo></s:Body></s:Envelope>";
+            var uri = $"{deviceBaseUri}/MediaRenderer/AVTransport/Control";
+
+            var content = new StringContent(soap, Encoding.UTF8, "text/xml");
+            content.Headers.Add("SOAPAction", @"""urn:schemas-upnp-org:service:AVTransport:1#GetMediaInfo""");
+
+            var response = await httpClient.PostAsync(uri, content);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            string xml = await response.Content.ReadAsStringAsync();
+            XDocument doc = XDocument.Parse(xml);
+
+            XNamespace s = "http://schemas.xmlsoap.org/soap/envelope/";
+            XNamespace u = "urn:schemas-upnp-org:service:AVTransport:1";
+
+            var mediaInfoElement = doc.Descendants(u + "GetMediaInfoResponse").FirstOrDefault();
+            if (mediaInfoElement == null)
+                return null;
+
+            return new MediaInfo
+            {
+                NrTracks = int.TryParse(mediaInfoElement.Element("NrTracks")?.Value, out int nr) ? nr : 0,
+                MediaDuration = mediaInfoElement.Element("MediaDuration")?.Value ?? "",
+                CurrentURI = mediaInfoElement.Element("CurrentURI")?.Value ?? "",
+                CurrentURIMetaData = mediaInfoElement.Element("CurrentURIMetaData")?.Value ?? "",
+                NextURI = mediaInfoElement.Element("NextURI")?.Value ?? "",
+                NextURIMetaData = mediaInfoElement.Element("NextURIMetaData")?.Value ?? "",
+                PlayMedium = mediaInfoElement.Element("PlayMedium")?.Value ?? "",
+                RecordMedium = mediaInfoElement.Element("RecordMedium")?.Value ?? "",
+                WriteStatus = mediaInfoElement.Element("WriteStatus")?.Value ?? ""
+            };
+        }
+
+        // Example class to hold the media info
+        public class MediaInfo
+        {
+            public int NrTracks { get; set; }
+            public string MediaDuration { get; set; }
+            public string CurrentURI { get; set; }
+            public string CurrentURIMetaData { get; set; }
+            public string NextURI { get; set; }
+            public string NextURIMetaData { get; set; }
+            public string PlayMedium { get; set; }
+            public string RecordMedium { get; set; }
+            public string WriteStatus { get; set; }
+        }
+
     }
 
 }

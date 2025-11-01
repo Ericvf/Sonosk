@@ -2,7 +2,7 @@
 
 namespace Sonosk.ViewModel
 {
-    public class DeviceViewModel : BaseViewModel
+    public class DeviceViewModel : BaseViewModel, IGroupOrDeviceViewModel
     {
         private readonly SingleEventTimer singleEventTimer;
         private readonly SonosDiscoverService sonosDiscoverService;
@@ -54,6 +54,7 @@ namespace Sonosk.ViewModel
         public GroupViewModel Group { get; set; }
 
         public string DeviceId { get; set; }
+        public string BaseUri => Device?.BaseUri ?? string.Empty;
 
         public void SetVolumeUI(int volume)
         {
@@ -81,6 +82,17 @@ namespace Sonosk.ViewModel
                     }
                 });
             }
+        }
+        public void IncreaseVolume(int v)
+        {
+            var newVolume = Math.Clamp(volume + v, 0, 100);
+            Volume = newVolume;
+        }
+
+        public void DecreaseVolume(int v)
+        {
+            var newVolume = Math.Clamp(volume - v, 0, 100);
+            Volume = newVolume;
         }
     }
 }

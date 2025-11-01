@@ -3,7 +3,19 @@ using System.Collections.ObjectModel;
 
 namespace Sonosk.ViewModel
 {
-    public class GroupViewModel : BaseViewModel
+    public interface IGroupOrDeviceViewModel
+    {
+        void IncreaseVolume(int delta);
+
+
+        void DecreaseVolume(int delta);
+
+        public string? Name { get;  }
+
+        public string BaseUri { get;}
+    }
+
+    public class GroupViewModel : BaseViewModel, IGroupOrDeviceViewModel
     {
         private readonly SingleEventTimer singleEventTimer;
         private readonly SonosDiscoverService? sonosDiscoverService;
@@ -70,7 +82,11 @@ namespace Sonosk.ViewModel
             }
         }
 
-   //     public SonosDevice? Coordinator { get; set; }
+        public string Name => GroupName;
+
+        public string BaseUri => Devices.FirstOrDefault()?.Device?.BaseUri ?? string.Empty;
+
+        //     public SonosDevice? Coordinator { get; set; }
 
         public override string ToString()
         {
@@ -85,7 +101,8 @@ namespace Sonosk.ViewModel
                 {
                     //await sonosDiscoverService.SetGroupVolume(Coordinator, volume);
 
-                    var devices = Devices.Where(d => d.Device != null).ToArray();
+                    var devices = Devices.ToArray();
+
                     double avg = devices.Average(d => d.Volume);
                     if (avg == 0)
                     {
