@@ -99,6 +99,7 @@ namespace Sonosk.ViewModel
 
         public ObservableCollection<GroupViewModel> Groups { get; } = [];
 
+
         //public MainViewModel()
         //{
         //    if (DesignerProperties.GetIsInDesignMode(new DependencyObject()))

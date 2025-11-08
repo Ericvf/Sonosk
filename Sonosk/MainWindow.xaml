@@ -13,7 +13,7 @@
         ShowInTaskbar="False"
         Height="Auto"
         Width="500"
-        d:DataContext="{d:DesignInstance Type=local:MainViewModel, IsDesignTimeCreatable=True}"
+        
         Background="Transparent"
         AllowsTransparency="True">
 
@@ -291,9 +291,9 @@
                                     <!-- Room name and volume text -->
                                     <TextBlock Style="{StaticResource LightText}"
                                                FontFamily="Segoe UI Semibold"
-                                               FontSize="18">
-                                <Run Text="{Binding GroupName}"
-                                        d:Text="GroupName" />
+                                               FontSize="18"
+                                               wpf:MouseWheelBehavior.Command="{Binding MouseScrollCommand}">
+                                            <Run Text="{Binding GroupName}" d:Text="GroupName" />
                                     </TextBlock>
 
                                     <Grid Margin="0,5,0,5">
@@ -370,10 +370,10 @@
                                                     <TextBlock Style="{StaticResource LightText}"
                                                                Grid.Column="0"
                                                                MinWidth="80"
-                                                               TextAlignment="Left">
-                                                    <Run Text="{Binding Name}"
-                                                         d:Text="Name"
-                                                         FontFamily="Segoe UI" />
+                                                               TextAlignment="Left"
+                                                               FontFamily="Segoe UI"
+                                                               wpf:MouseWheelBehavior.Command="{Binding MouseScrollCommand}">
+                                                            <Run Text="{Binding Name}" d:Text="Name" />
                                                     </TextBlock>
 
                                                     <Border BorderThickness="1"
@@ -436,7 +436,7 @@
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
-                
+
                 <StackPanel>
                     <StackPanel.InputBindings>
                         <MouseBinding MouseAction="LeftClick"

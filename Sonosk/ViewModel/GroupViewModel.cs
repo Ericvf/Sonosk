@@ -1,21 +1,10 @@
 ﻿using Sonosk.Sonos;
+using Sonosk.Wpf;
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 
 namespace Sonosk.ViewModel
 {
-    public interface IGroupOrDeviceViewModel
-    {
-        void IncreaseVolume(int delta);
-
-
-        void DecreaseVolume(int delta);
-
-        int Volume { get; set; }
-
-        string? Name { get; }
-
-        string BaseUri { get;}
-    }
 
     public class GroupViewModel : BaseViewModel, IGroupOrDeviceViewModel
     {
@@ -155,5 +144,11 @@ namespace Sonosk.ViewModel
             var volume = Math.Clamp((int)Math.Round(avg), 0, 100);
             SetVolumeUI(volume);
         }
+
+        public ICommand MouseScrollCommand => new RelayCommand<int>(delta =>
+        {
+            if (delta > 0) IncreaseVolume(1);
+            else if (delta < 0) DecreaseVolume(1);
+        });
     }
 }

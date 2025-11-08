@@ -1,4 +1,6 @@
 ﻿using Sonosk.Sonos;
+using Sonosk.Wpf;
+using System.Windows.Input;
 
 namespace Sonosk.ViewModel
 {
@@ -96,5 +98,11 @@ namespace Sonosk.ViewModel
             var newVolume = Math.Clamp(volume - v, 0, 100);
             Volume = newVolume;
         }
+
+        public ICommand MouseScrollCommand => new RelayCommand<int>(delta =>
+        {
+            if (delta > 0) IncreaseVolume(1);
+            else if (delta < 0) DecreaseVolume(1);
+        });
     }
 }
