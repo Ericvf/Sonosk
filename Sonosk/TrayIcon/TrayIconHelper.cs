@@ -23,7 +23,7 @@ namespace Sonosk.TrayIcon
             public int uCallbackMessage;
             public nint hIcon;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-            public string szTip;
+            public string? szTip;
             public int dwState;
             public int dwStateMask;
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
@@ -43,7 +43,7 @@ namespace Sonosk.TrayIcon
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         private static extern nint GetModuleHandle(string? lpModuleName);
 
-        public static void AddTrayIcon(nint windowHandle, string tooltip)
+        public static void AddTrayIcon(nint windowHandle, string? tooltip)
         {
             nint hInstance = GetModuleHandle(null);
             var myIcon = LoadIcon(hInstance, IDI_APPLICATION);

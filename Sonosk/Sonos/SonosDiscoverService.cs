@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -51,12 +52,10 @@ namespace Sonosk.Sonos
 
             byte[] receiveBuffer = new byte[64000];
 
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            cts.CancelAfter(TimeSpan.FromSeconds(timeout));
-
-            while (true)
+            var stopwatch = Stopwatch.StartNew();
+            while (stopwatch.Elapsed < TimeSpan.FromSeconds(timeout))
             {
-                if (cts.Token.IsCancellationRequested)
+                if (cancellationToken.IsCancellationRequested)
                 {
                     yield break;
                 }
@@ -84,16 +83,11 @@ namespace Sonosk.Sonos
                 }
                 else
                 {
-                    try
-                    {
-                        await Task.Delay(50, cts.Token);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        yield break;
-                    }
+                    await Task.Delay(50, cancellationToken);
                 }
             }
+
+            stopwatch.Stop();
         }
 
         private string GetBaseUri(string location)

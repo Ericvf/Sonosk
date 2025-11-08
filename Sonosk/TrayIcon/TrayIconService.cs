@@ -8,28 +8,29 @@ namespace Sonosk.TrayIcon
 {
     public class TrayIconService
     {
-        private nint hwnd;
-        private uint trayIconId = 1; // must match what you pass into AddTrayIcon
-        private static nint hookId = nint.Zero;
-        private static LowLevelMouseProc? proc;
-
-        public void Show(nint handle)
-        {
-            hwnd = handle;
-            TrayIconHelper.AddTrayIcon(handle, "SONOSKontroller");
-            HwndSource source = HwndSource.FromHwnd(handle);
-            source.AddHook(WndProc);
-            proc = HookCallback;
-            hookId = SetWindowsHookEx(WH_MOUSE_LL, proc, Process.GetCurrentProcess().MainModule!.BaseAddress, 0);
-        }
-
         private const int WM_LBUTTONDOWN = 0x0201;
         private const int WM_RBUTTONDOWN = 0x0204;
         private const int WM_MOUSEWHEEL = 0x020A;
         private const int WH_MOUSE_LL = 14;
 
-        const int WM_APP = 0x8000;
-        const int WM_APP_ACTIVATE = WM_APP + 1;
+        public event EventHandler<EventArgs>? Clicked;
+        public event EventHandler<EventArgs>? RightClicked;
+        public event EventHandler<DeltaEventArgs>? MouseScroll;
+
+        private static nint hookId = nint.Zero;
+        private static LowLevelMouseProc? proc;
+        private uint trayIconId = 1;
+        private nint hwnd;
+
+        public void Show(nint handle, string? title)
+        {
+            hwnd = handle;
+            TrayIconHelper.AddTrayIcon(handle, title);
+            HwndSource source = HwndSource.FromHwnd(handle);
+            source.AddHook(WndProc);
+            proc = HookCallback;
+            hookId = SetWindowsHookEx(WH_MOUSE_LL, proc, Process.GetCurrentProcess().MainModule!.BaseAddress, 0);
+        }
 
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
@@ -47,10 +48,6 @@ namespace Sonosk.TrayIcon
                             handled = true;
                             break;
                     }
-                    break;
-
-                case WM_APP_ACTIVATE:
-                    handled = true;
                     break;
             }
 
@@ -89,10 +86,6 @@ namespace Sonosk.TrayIcon
             }
             return false;
         }
-
-        public event EventHandler<EventArgs>? Clicked;
-        public event EventHandler<EventArgs>? RightClicked;
-        public event EventHandler<DeltaEventArgs>? MouseScroll;
 
         public class DeltaEventArgs : EventArgs
         {
@@ -141,7 +134,6 @@ namespace Sonosk.TrayIcon
             public int uID;
             public Guid guidItem;
         }
-
 
         [StructLayout(LayoutKind.Sequential)]
         private struct POINT
