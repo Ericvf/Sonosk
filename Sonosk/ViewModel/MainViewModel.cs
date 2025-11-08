@@ -11,9 +11,11 @@ namespace Sonosk.ViewModel
     {
         private readonly SonosDiscoverService sonosDiscoverService;
         private readonly ViewModelFactory viewModelFactory;
+        private readonly SingleEventTimer singleEventTimer;
 
         public event Action? LoadingStarted;
         public event Action? LoadingEnded;
+        public event Action? HideForm;
 
         private bool isLoading;
         public bool IsLoading
@@ -124,10 +126,11 @@ namespace Sonosk.ViewModel
             }
         }
 
-        public MainViewModel(SonosDiscoverService sonosDiscoverService, ViewModelFactory viewModelFactory)
+        public MainViewModel(SonosDiscoverService sonosDiscoverService, ViewModelFactory viewModelFactory, SingleEventTimer singleEventTimer)
         {
             this.sonosDiscoverService = sonosDiscoverService;
             this.viewModelFactory = viewModelFactory;
+            this.singleEventTimer = singleEventTimer;
         }
 
         #region Commands
@@ -170,7 +173,7 @@ namespace Sonosk.ViewModel
         private async void SelectDeviceHandler(IGroupOrDeviceViewModel obj)
         {
             SelectedViewModel = obj;
-          
+
         }
 
         #endregion
@@ -341,11 +344,28 @@ namespace Sonosk.ViewModel
         public void IncreaseVolume(int v)
         {
             SelectedViewModel?.IncreaseVolume(v);
+            ScheduleAutoHide();
         }
 
         public void DecreaseVolume(int v)
         {
             SelectedViewModel?.DecreaseVolume(v);
+            ScheduleAutoHide();
+        }
+
+        public Task ScheduleAutoHide()
+        {
+            if (isSmallView)
+            {
+                singleEventTimer.Queue(2000, async () =>
+                {
+                    if (isSmallView)
+                    {
+                        HideForm?.Invoke();
+                    }
+                });
+            }
+            return Task.CompletedTask;
         }
     }
 }
