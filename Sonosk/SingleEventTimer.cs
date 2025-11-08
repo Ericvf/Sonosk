@@ -10,6 +10,12 @@
             timer = new Timer(_ => action(), null, interval, Timeout.Infinite);
         }
 
+        public void Queue(int interval, Action action)
+        {
+            timer?.Dispose();
+            timer = new Timer(_ => action(), null, interval, Timeout.Infinite);
+        }
+
         public void Cancel()
         {
             timer?.Dispose();

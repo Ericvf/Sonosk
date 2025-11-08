@@ -11,7 +11,7 @@ namespace Sonosk.ViewModel
     {
         private readonly SonosDiscoverService sonosDiscoverService;
         private readonly ViewModelFactory viewModelFactory;
-        private readonly SingleEventTimer singleEventTimer;
+        private readonly SingleEventTimer autoHideTimer;
 
         public event Action? LoadingStarted;
         public event Action? LoadingEnded;
@@ -69,8 +69,8 @@ namespace Sonosk.ViewModel
             }
         }
 
-        private IGroupOrDeviceViewModel selectedViewModel;
-        public IGroupOrDeviceViewModel SelectedViewModel
+        private IGroupOrDeviceViewModel? selectedViewModel;
+        public IGroupOrDeviceViewModel? SelectedViewModel
         {
             get { return selectedViewModel; }
             set
@@ -83,10 +83,10 @@ namespace Sonosk.ViewModel
             }
         }
 
-        private string currentlyPlaying;
+        private string? currentlyPlaying;
         public string CurrentlyPlaying
         {
-            get { return currentlyPlaying; }
+            get { return currentlyPlaying ?? string.Empty; }
             set
             {
                 if (currentlyPlaying != value)
@@ -97,83 +97,76 @@ namespace Sonosk.ViewModel
             }
         }
 
-        public ObservableCollection<GroupViewModel> Groups { get; } = new ObservableCollection<GroupViewModel>();
+        public ObservableCollection<GroupViewModel> Groups { get; } = [];
 
-        public MainViewModel()
-        {
-            if (DesignerProperties.GetIsInDesignMode(new DependencyObject()))
-            {
-                Groups = new ObservableCollection<GroupViewModel>
-                {
-                    new GroupViewModel
-                    {
-                        GroupName = "Living Room",
-                        Devices =
-                        {
-                             new DeviceViewModel { Name = "Living Room" , Volume=20 },
-                        },
-                    },
-                    new GroupViewModel
-                    {
-                        GroupName = "Office, Kitchen",
-                        Devices =
-                        {
-                             new DeviceViewModel { Name = "Office" , Volume=20 },
-                             new DeviceViewModel { Name = "Kitchen" , Volume=15 },
-                        },
-                    },
-                };
-            }
-        }
+        //public MainViewModel()
+        //{
+        //    if (DesignerProperties.GetIsInDesignMode(new DependencyObject()))
+        //    {
+        //        Groups = new ObservableCollection<GroupViewModel>
+        //        {
+        //            new GroupViewModel
+        //            {
+        //                GroupName = "Living Room",
+        //                Devices =
+        //                {
+        //                     new DeviceViewModel { Name = "Living Room" , Volume=20 },
+        //                },
+        //            },
+        //            new GroupViewModel
+        //            {
+        //                GroupName = "Office, Kitchen",
+        //                Devices =
+        //                {
+        //                     new DeviceViewModel { Name = "Office" , Volume=20 },
+        //                     new DeviceViewModel { Name = "Kitchen" , Volume=15 },
+        //                },
+        //            },
+        //        };
+        //    }
+        //}
 
         public MainViewModel(SonosDiscoverService sonosDiscoverService, ViewModelFactory viewModelFactory, SingleEventTimer singleEventTimer)
         {
             this.sonosDiscoverService = sonosDiscoverService;
             this.viewModelFactory = viewModelFactory;
-            this.singleEventTimer = singleEventTimer;
+            this.autoHideTimer = singleEventTimer;
         }
 
         #region Commands
 
-        private ICommand refreshCommand;
+        private ICommand? refreshCommand;
 
         public ICommand RefreshCommand
         {
             get
             {
-                if (refreshCommand == null)
-                {
-                    refreshCommand = new RelayCommand(RefreshHandler);
-                }
+                refreshCommand ??= new RelayCommand(RefreshHandler);
 
                 return refreshCommand;
             }
         }
 
-        private async void RefreshHandler(object obj)
+        private async void RefreshHandler(object? obj)
         {
             await Refresh(5);
         }
 
-        private ICommand selectDeviceCommand;
+        private ICommand? selectDeviceCommand;
 
         public ICommand SelectDeviceCommand
         {
             get
             {
-                if (selectDeviceCommand == null)
-                {
-                    selectDeviceCommand = new RelayCommand<IGroupOrDeviceViewModel>(SelectDeviceHandler);
-                }
+                selectDeviceCommand ??= new RelayCommand<IGroupOrDeviceViewModel>(SelectDeviceHandler);
 
                 return selectDeviceCommand;
             }
         }
 
-        private async void SelectDeviceHandler(IGroupOrDeviceViewModel obj)
+        private void SelectDeviceHandler(IGroupOrDeviceViewModel obj)
         {
             SelectedViewModel = obj;
-
         }
 
         #endregion
@@ -199,7 +192,7 @@ namespace Sonosk.ViewModel
                 {
                     if (!hasZoneTopology)
                     {
-                        var isCoordinator = device.Services.Any(s => s.ServiceId == "urn:upnp-org:serviceId:ZoneGroupTopology");
+                        var isCoordinator = device.Services?.Any(s => s.ServiceId == "urn:upnp-org:serviceId:ZoneGroupTopology") ?? false;
                         if (isCoordinator)
                         {
                             await UpdateZone(device);
@@ -216,7 +209,7 @@ namespace Sonosk.ViewModel
                     {
                         if (deviceViewModel.Device == null && deviceViewModel.DeviceId != null)
                         {
-                            deviceViewModel.Device = devices.FirstOrDefault(d => d.UDN.Substring(5) == deviceViewModel.DeviceId);
+                            deviceViewModel.Device = devices.FirstOrDefault(d => d.UDN?.Substring(5) == deviceViewModel.DeviceId);
                         }
                     }
                 }
@@ -236,77 +229,80 @@ namespace Sonosk.ViewModel
         private async Task UpdateZone(SonosDevice device)
         {
             var zone = await sonosDiscoverService.GetZone(device);
-            foreach (var group in zone.ZoneGroups.OrderBy(z => z.ID))
+            if (zone != null)
             {
-                var groupName = string.Join(", ", group.ZoneGroupMember.Select(m => m.ZoneName).OrderBy(_ => _).ToArray());
-
-                var existingGroup = Groups.SingleOrDefault(g => g.Id == group.ID);
-                if (existingGroup != null)
+                foreach (var group in zone.ZoneGroups.OrderBy(z => z.ID))
                 {
-                    existingGroup.GroupName = groupName;
+                    var groupName = string.Join(", ", group.ZoneGroupMember.Select(m => m.ZoneName).OrderBy(_ => _).ToArray());
 
-                    foreach (var zoneGroupDevice in group.ZoneGroupMember)
+                    var existingGroup = Groups.SingleOrDefault(g => g.Id == group.ID);
+                    if (existingGroup != null)
                     {
-                        var existingDevice = existingGroup.Devices.SingleOrDefault(d => d.DeviceId == zoneGroupDevice.UUID);
-                        if (existingDevice == null)
+                        existingGroup.GroupName = groupName;
+
+                        foreach (var zoneGroupDevice in group.ZoneGroupMember)
+                        {
+                            var existingDevice = existingGroup.Devices.SingleOrDefault(d => d.DeviceId == zoneGroupDevice.UUID);
+                            if (existingDevice == null)
+                            {
+                                var memberViewModel = viewModelFactory.Create<DeviceViewModel>();
+                                memberViewModel.Name = zoneGroupDevice.ZoneName;
+                                memberViewModel.DeviceId = zoneGroupDevice.UUID;
+                                memberViewModel.Group = existingGroup;
+
+                                var volume = await GetZoneGroupMemberVolume(zoneGroupDevice);
+                                memberViewModel.SetVolumeUI(volume);
+
+                                existingGroup.Devices.Add(memberViewModel);
+                            }
+                            else
+                            {
+                                existingDevice.Name = zoneGroupDevice.ZoneName;
+                                existingDevice.Group = existingGroup;
+                            }
+                        }
+
+                        var membersToRemove = existingGroup.Devices
+                            .Where(d => !group.ZoneGroupMember.Any(m => m.ZoneName == d.Name))
+                            .ToArray();
+
+                        foreach (var memberToRemove in membersToRemove)
+                        {
+                            existingGroup.Devices.Remove(memberToRemove);
+                        }
+                    }
+                    else
+                    {
+                        var groupViewModel = viewModelFactory.Create<GroupViewModel>();
+                        groupViewModel.Id = group.ID;
+                        groupViewModel.GroupName = groupName;
+
+                        foreach (var zoneGroupDevice in group.ZoneGroupMember)
                         {
                             var memberViewModel = viewModelFactory.Create<DeviceViewModel>();
                             memberViewModel.Name = zoneGroupDevice.ZoneName;
                             memberViewModel.DeviceId = zoneGroupDevice.UUID;
-                            memberViewModel.Group = existingGroup;
+                            memberViewModel.Group = groupViewModel;
 
                             var volume = await GetZoneGroupMemberVolume(zoneGroupDevice);
                             memberViewModel.SetVolumeUI(volume);
 
-                            existingGroup.Devices.Add(memberViewModel);
+                            groupViewModel.Devices.Add(memberViewModel);
                         }
-                        else
-                        {
-                            existingDevice.Name = zoneGroupDevice.ZoneName;
-                            existingDevice.Group = existingGroup;
-                        }
-                    }
 
-                    var membersToRemove = existingGroup.Devices
-                        .Where(d => !group.ZoneGroupMember.Any(m => m.ZoneName == d.Name))
-                        .ToArray();
-
-                    foreach (var memberToRemove in membersToRemove)
-                    {
-                        existingGroup.Devices.Remove(memberToRemove);
+                        groupViewModel.CalculateVolumeUI();
+                        Groups.Add(groupViewModel);
                     }
                 }
-                else
+
+                var groupsToRemove = Groups
+                    .Where(g => !zone.ZoneGroups.Any(z => z.ID == g.Id))
+                    .ToArray();
+
+                foreach (var groupToRemove in groupsToRemove)
                 {
-                    var groupViewModel = viewModelFactory.Create<GroupViewModel>();
-                    groupViewModel.Id = group.ID;
-                    groupViewModel.GroupName = groupName;
-
-                    foreach (var zoneGroupDevice in group.ZoneGroupMember)
-                    {
-                        var memberViewModel = viewModelFactory.Create<DeviceViewModel>();
-                        memberViewModel.Name = zoneGroupDevice.ZoneName;
-                        memberViewModel.DeviceId = zoneGroupDevice.UUID;
-                        memberViewModel.Group = groupViewModel;
-
-                        var volume = await GetZoneGroupMemberVolume(zoneGroupDevice);
-                        memberViewModel.SetVolumeUI(volume);
-
-                        groupViewModel.Devices.Add(memberViewModel);
-                    }
-
-                    groupViewModel.CalculateVolumeUI();
-                    Groups.Add(groupViewModel);
+                    Groups.Remove(groupToRemove);
                 }
-            }
-
-            var groupsToRemove = Groups
-                .Where(g => !zone.ZoneGroups.Any(z => z.ID == g.Id))
-                .ToArray();
-
-            foreach (var groupToRemove in groupsToRemove)
-            {
-                Groups.Remove(groupToRemove);
             }
         }
 
@@ -329,7 +325,7 @@ namespace Sonosk.ViewModel
                 .Where(d => d.Device != null)
                 .Select(async d =>
                 {
-                    var volume = await sonosDiscoverService.GetVolume(d.Device);
+                    var volume = await sonosDiscoverService.GetVolume(d.Device!);
                     d.SetVolumeUI(volume);
                 });
 
@@ -353,11 +349,11 @@ namespace Sonosk.ViewModel
             ScheduleAutoHide();
         }
 
-        public Task ScheduleAutoHide()
+        public void ScheduleAutoHide()
         {
             if (isSmallView)
             {
-                singleEventTimer.Queue(2000, async () =>
+                autoHideTimer.Queue(2000, () =>
                 {
                     if (isSmallView)
                     {
@@ -365,7 +361,6 @@ namespace Sonosk.ViewModel
                     }
                 });
             }
-            return Task.CompletedTask;
         }
     }
 }

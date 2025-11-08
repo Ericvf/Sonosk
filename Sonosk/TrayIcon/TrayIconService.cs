@@ -8,16 +8,10 @@ namespace Sonosk.TrayIcon
 {
     public class TrayIconService
     {
-        private readonly MainViewModel mainViewModel;
         private nint hwnd;
         private uint trayIconId = 1; // must match what you pass into AddTrayIcon
         private static nint hookId = nint.Zero;
-        private static LowLevelMouseProc proc;
-
-        public TrayIconService(MainViewModel mainViewModel)
-        {
-            this.mainViewModel = mainViewModel;
-        }
+        private static LowLevelMouseProc? proc;
 
         public void Show(nint handle)
         {
@@ -96,9 +90,9 @@ namespace Sonosk.TrayIcon
             return false;
         }
 
-        public event EventHandler<EventArgs> Clicked;
-        public event EventHandler<EventArgs> RightClicked;
-        public event EventHandler<DeltaEventArgs> MouseScroll;
+        public event EventHandler<EventArgs>? Clicked;
+        public event EventHandler<EventArgs>? RightClicked;
+        public event EventHandler<DeltaEventArgs>? MouseScroll;
 
         public class DeltaEventArgs : EventArgs
         {

@@ -40,8 +40,8 @@ namespace Sonosk.TrayIcon
         [DllImport("user32.dll")]
         private static extern nint LoadIcon(nint hInstance, nint lpIconName);
 
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-        private static extern nint GetModuleHandle(string lpModuleName);
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+        private static extern nint GetModuleHandle(string? lpModuleName);
 
         public static void AddTrayIcon(nint windowHandle, string tooltip)
         {
@@ -50,7 +50,7 @@ namespace Sonosk.TrayIcon
 
             NOTIFYICONDATA nid = new()
             {
-                cbSize = Marshal.SizeOf(typeof(NOTIFYICONDATA)),
+                cbSize = Marshal.SizeOf<NOTIFYICONDATA>(),
                 hWnd = windowHandle,
                 uID = 1,
                 uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP,
@@ -66,7 +66,7 @@ namespace Sonosk.TrayIcon
         {
             NOTIFYICONDATA nid = new()
             {
-                cbSize = Marshal.SizeOf(typeof(NOTIFYICONDATA)),
+                cbSize = Marshal.SizeOf<NOTIFYICONDATA>(),
                 hWnd = windowHandle,
                 uID = 1
             };

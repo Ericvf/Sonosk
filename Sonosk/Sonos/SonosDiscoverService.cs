@@ -120,7 +120,7 @@ namespace Sonosk.Sonos
             XNamespace u = "urn:schemas-upnp-org:service:RenderingControl:1";
 
             // Grab the value
-            string currentVolume = doc.Descendants(u + "GetVolumeResponse")
+            var currentVolume = doc.Descendants(u + "GetVolumeResponse")
                                       .Elements("CurrentVolume")
                                       .FirstOrDefault()?.Value;
 
@@ -145,7 +145,7 @@ namespace Sonosk.Sonos
             XNamespace u = "urn:schemas-upnp-org:service:GroupRenderingControl:1";
 
             // Grab the value
-            string currentVolume = doc.Descendants(u + "GetGroupVolumeResponse")
+            var currentVolume = doc.Descendants(u + "GetGroupVolumeResponse")
                                       .Elements("CurrentVolume")
                                       .FirstOrDefault()?.Value;
 
@@ -189,7 +189,7 @@ namespace Sonosk.Sonos
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<ZoneGroupState> GetZone(SonosDevice device)
+        public async Task<ZoneGroupState?> GetZone(SonosDevice device)
         {
             string soap = @"<?xml version=""1.0"" encoding=""utf-8""?>
                         <s:Envelope xmlns:s=""http://schemas.xmlsoap.org/soap/envelope/"" 
@@ -217,12 +217,18 @@ namespace Sonosk.Sonos
                 .Elements("ZoneGroupState")
                 .FirstOrDefault()?.Value;
 
-            XmlSerializer serializer = new XmlSerializer(typeof(ZoneGroupState));
-            using (TextReader reader = new StringReader(zoneGroupStateEscaped))
+            if (zoneGroupStateEscaped != null)
             {
-                var zoneGroupState = (ZoneGroupState)serializer.Deserialize(reader);
-                return zoneGroupState;
+                XmlSerializer serializer = new XmlSerializer(typeof(ZoneGroupState));
+                using (TextReader reader = new StringReader(zoneGroupStateEscaped))
+                {
+                    var deserialized = serializer.Deserialize(reader);
+                    if (deserialized is ZoneGroupState zoneGroupState)
+                        return zoneGroupState;
+                }
             }
+
+            return default;
         }
 
         private async Task<SonosDevice?> GetSonosDevice(string location)
@@ -264,7 +270,11 @@ namespace Sonosk.Sonos
                     {
                         foreach (var v in versions.Elements())
                         {
-                            device.Versions[v.Name.LocalName] = v.Element(ns + "version")?.Value;
+                            var value = v.Element(ns + "version")?.Value;
+                            if (value != null)
+                            {
+                                device.Versions[v.Name.LocalName] = value;
+                            }
                         }
                     }
 
@@ -382,11 +392,14 @@ namespace Sonosk.Sonos
                 try
                 {
                     var metaDoc = XDocument.Parse(metadata);
-                    XNamespace dc = "http://purl.org/dc/elements/1.1/";
-                    string title = metaDoc.Descendants(dc + "title").FirstOrDefault()?.Value;
-                    string artist = metaDoc.Descendants(dc + "creator").FirstOrDefault()?.Value;
-                    if (!string.IsNullOrEmpty(title))
-                        return !string.IsNullOrEmpty(artist) ? $"{title} — {artist}" : title;
+                    if (metaDoc != null)
+                    {
+                        XNamespace dc = "http://purl.org/dc/elements/1.1/";
+                        var title = metaDoc.Descendants(dc + "title").FirstOrDefault()?.Value;
+                        var artist = metaDoc.Descendants(dc + "creator").FirstOrDefault()?.Value;
+                        if (!string.IsNullOrEmpty(title))
+                            return !string.IsNullOrEmpty(artist) ? $"{title} — {artist}" : title;
+                    }
                 }
                 catch { /* ignore parsing errors */ }
             }
@@ -433,15 +446,15 @@ namespace Sonosk.Sonos
         // Example class to hold the media info
         public class MediaInfo
         {
-            public int NrTracks { get; set; }
-            public string MediaDuration { get; set; }
-            public string CurrentURI { get; set; }
-            public string CurrentURIMetaData { get; set; }
-            public string NextURI { get; set; }
-            public string NextURIMetaData { get; set; }
-            public string PlayMedium { get; set; }
-            public string RecordMedium { get; set; }
-            public string WriteStatus { get; set; }
+            public int? NrTracks { get; set; }
+            public string? MediaDuration { get; set; }
+            public string? CurrentURI { get; set; }
+            public string? CurrentURIMetaData { get; set; }
+            public string? NextURI { get; set; }
+            public string? NextURIMetaData { get; set; }
+            public string? PlayMedium { get; set; }
+            public string? RecordMedium { get; set; }
+            public string? WriteStatus { get; set; }
         }
 
     }

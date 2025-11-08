@@ -1,84 +1,49 @@
-﻿using System;
-using System.Diagnostics;
-using System.Globalization;
-using System.Windows;
-using System.Windows.Data;
+﻿using System.Diagnostics;
 using System.Windows.Input;
 
 namespace Sonosk.Wpf
 {
-    public class SelectedStyleMultiConverter : IMultiValueConverter
-    {
-        public Style NormalStyle { get; set; }
-        public Style SelectedStyle { get; set; }
-
-        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
-        {
-            // values[0] = current item (Device or Group)
-            // values[1] = SelectedViewModel
-            if (values.Length < 2) return NormalStyle;
-            return ReferenceEquals(values[0], values[1]) ? SelectedStyle : NormalStyle;
-        }
-
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
     public class RelayCommand : ICommand
     {
         #region Fields
 
-        readonly Action<object> _execute;
-        readonly Predicate<object> _canExecute;
+        readonly Action<object?>? _execute;
+        readonly Predicate<object?>? _canExecute;
 
-        #endregion // Fields
+        #endregion 
 
         #region Constructors
 
-        /// <summary>
-        /// Creates a new command that can always execute.
-        /// </summary>
-        /// <param name="execute">The execution logic.</param>
-        public RelayCommand(Action<object> execute)
+        public RelayCommand(Action<object?>? execute)
             : this(execute, null)
         {
         }
 
-        /// <summary>
-        /// Creates a new command.
-        /// </summary>
-        /// <param name="execute">The execution logic.</param>
-        /// <param name="canExecute">The execution status logic.</param>
-        public RelayCommand(Action<object> execute, Predicate<object> canExecute)
+        public RelayCommand(Action<object?>? execute, Predicate<object?>? canExecute)
         {
-            if (execute == null)
-                throw new ArgumentNullException("execute");
-
-            _execute = execute;
+            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute;
         }
 
-        #endregion // Constructors
+        #endregion
 
         #region ICommand Members
 
         [DebuggerStepThrough]
-        public bool CanExecute(object parameters)
+        public bool CanExecute(object? parameters)
         {
-            return _canExecute == null ? true : _canExecute(parameters);
+            return _canExecute == null || _canExecute(parameters);
         }
 
-        public event EventHandler CanExecuteChanged
+        public event EventHandler? CanExecuteChanged
         {
             add { CommandManager.RequerySuggested += value; }
             remove { CommandManager.RequerySuggested -= value; }
         }
 
-        public void Execute(object parameters)
+        public void Execute(object? parameters)
         {
-            _execute(parameters);
+            _execute?.Invoke(parameters);
         }
 
         #endregion // ICommand Members
@@ -87,71 +52,41 @@ namespace Sonosk.Wpf
     public class RelayCommand<TEntity> : ICommand
     {
         private readonly Action<TEntity> _execute;
-        private readonly Func<bool> _canExecute;
+        private readonly Func<bool>? _canExecute;
 
-        /// <summary>
-        /// Raised when RaiseCanExecuteChanged is called.
-        /// </summary>
-        public event EventHandler CanExecuteChanged;
+  
+        public event EventHandler? CanExecuteChanged;
 
-        /// <summary>
-        /// Creates a new command that can always execute.
-        /// </summary>
-        /// <param name="execute">The execution logic.</param>
         public RelayCommand(Action<TEntity> execute)
             : this(execute, null)
         {
         }
 
-        /// <summary>
-        /// Creates a new command.
-        /// </summary>
-        /// <param name="execute">The execution logic.</param>
-        /// <param name="canExecute">The execution status logic.</param>
-        public RelayCommand(Action<TEntity> execute, Func<bool> canExecute)
+        public RelayCommand(Action<TEntity> execute, Func<bool>? canExecute)
         {
-            if (execute == null)
-                throw new ArgumentNullException("execute");
-            _execute = execute;
+            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute;
         }
 
-        /// <summary>
-        /// Determines whether this <see cref="RelayCommand"/> can execute in its current state.
-        /// </summary>
-        /// <param name="parameter">
-        /// Data used by the command. If the command does not require data to be passed, this object can be set to null.
-        /// </param>
-        /// <returns>true if this command can be executed; otherwise, false.</returns>
-        public bool CanExecute(object parameter)
+        public bool CanExecute(object? parameter)
         {
-            return _canExecute == null ? true : _canExecute();
+            return _canExecute == null || _canExecute();
         }
 
-        /// <summary>
-        /// Executes the <see cref="RelayCommand"/> on the current command target.
-        /// </summary>
-        /// <param name="parameter">
-        /// Data used by the command. If the command does not require data to be passed, this object can be set to null.
-        /// </param>
-        public void Execute(object parameter)
+
+        public void Execute(object? parameter)
         {
-            var tEntity = (TEntity)parameter;
-            _execute(tEntity);
+            if (parameter != null)
+            {
+                var tEntity = (TEntity)parameter;
+                _execute(tEntity);
+            }
         }
 
-        /// <summary>
-        /// Method used to raise the <see cref="CanExecuteChanged"/> event
-        /// to indicate that the return value of the <see cref="CanExecute"/>
-        /// method has changed.
-        /// </summary>
+  
         public void RaiseCanExecuteChanged()
         {
-            var handler = CanExecuteChanged;
-            if (handler != null)
-            {
-                handler(this, EventArgs.Empty);
-            }
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }

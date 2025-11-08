@@ -1,9 +1,6 @@
 ﻿using AnimationExtensions;
 using Sonosk.ViewModel;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Windows;
-using System.Windows.Interop;
 using System.Windows.Threading;
 
 namespace Sonosk
@@ -12,14 +9,11 @@ namespace Sonosk
     public partial class MainWindow : Window
     {
         private readonly MainViewModel mainViewModel;
-        private readonly SingleEventTimer singleEventTimer;
-        private Animation hideAnimation, showAnimation;
-        private bool isVisibilityToggle = true;
+        private Animation? hideAnimation, showAnimation;
 
-        public MainWindow(MainViewModel mainViewModel, SingleEventTimer singleEventTimer)
+        public MainWindow(MainViewModel mainViewModel)
         {
             this.mainViewModel = mainViewModel;
-            this.singleEventTimer = singleEventTimer;
             DataContext = mainViewModel;
 
             InitializeComponent();
@@ -56,46 +50,34 @@ namespace Sonosk
 
         private void IsDeactivated()
         {
-            //if (!isVisibilityToggle)
-            {
-                showAnimation?.Stop();
-                hideAnimation?.Stop();
-                hideAnimation = LayoutRoot
-                    .Fade(0, 300, Eq.OutSine)
-                    .Move(0, 100, 200, Eq.InBack)
-                    .ThenDo(d =>
-                    {
-                        //isVisibilityToggle = true;
-                        mainViewModel.IsActivated = false;
-                        Hide();
-                    })
-                .Play();
-            }
+            showAnimation?.Stop();
+            hideAnimation?.Stop();
+            hideAnimation = LayoutRoot
+                .Fade(0, 300, Eq.OutSine)
+                .Move(0, 100, 200, Eq.InBack)
+                .ThenDo(d =>
+                {
+                    mainViewModel.IsActivated = false;
+                    Hide();
+                })
+            .Play();
         }
 
         private void IsActivated()
         {
+            PositionWindowBottomRight();
+            mainViewModel.IsActivated = true;
+            hideAnimation?.Stop();
+            showAnimation?.Stop();
+            showAnimation = LayoutRoot.Fade(0).Fade(1, 200, Eq.OutSine)
+                .Move(0, 100)
+                .Move(0, 0, 200, Eq.OutBack)
+                .Play();
 
-            //if (isVisibilityToggle)
+            if (!mainViewModel.IsSmallView)
             {
-                PositionWindowBottomRight();
-
-                //isVisibilityToggle = false;
-                mainViewModel.IsActivated = true;
-                hideAnimation?.Stop();
-                showAnimation?.Stop();
-                singleEventTimer.Cancel();
-                showAnimation = LayoutRoot.Fade(0).Fade(1, 200, Eq.OutSine)
-                    .Move(0, 100)
-                    .Move(0, 0, 200, Eq.OutBack)
-                    .Play();
-
-                if (!mainViewModel.IsSmallView)
-                {
-                    mainViewModel.Refresh(2);
-                }
+                _=mainViewModel.Refresh(2);
             }
         }
-
     }
 }

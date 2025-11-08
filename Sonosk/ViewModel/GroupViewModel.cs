@@ -20,18 +20,16 @@ namespace Sonosk.ViewModel
     public class GroupViewModel : BaseViewModel, IGroupOrDeviceViewModel
     {
         private readonly SingleEventTimer singleEventTimer;
-        private readonly SonosDiscoverService? sonosDiscoverService;
 
         public ObservableCollection<DeviceViewModel> Devices { get; } = new ObservableCollection<DeviceViewModel>();
 
-        public GroupViewModel()
-        {
+        //public GroupViewModel()
+        //{
 
-        }
+        //}
 
-        public GroupViewModel(SonosDiscoverService sonosDiscoverService, SingleEventTimer singleEventTimer)
+        public GroupViewModel(SingleEventTimer singleEventTimer)
         {
-            this.sonosDiscoverService = sonosDiscoverService;
             this.singleEventTimer = singleEventTimer;
         }
 
@@ -84,7 +82,7 @@ namespace Sonosk.ViewModel
             }
         }
 
-        public string Name => GroupName;
+        public string Name => GroupName ?? "Unknown";
 
         public string BaseUri => Devices.FirstOrDefault()?.Device?.BaseUri ?? string.Empty;
 
@@ -99,7 +97,7 @@ namespace Sonosk.ViewModel
         {
           //  if (Coordinator != null)
             {
-                singleEventTimer.Queue(100, async () =>
+                singleEventTimer.Queue(100, () =>
                 {
                     //await sonosDiscoverService.SetGroupVolume(Coordinator, volume);
 

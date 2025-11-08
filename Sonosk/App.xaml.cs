@@ -2,7 +2,6 @@
 using Sonosk.Sonos;
 using Sonosk.TrayIcon;
 using Sonosk.ViewModel;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
