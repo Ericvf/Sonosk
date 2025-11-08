@@ -12,56 +12,13 @@
         Title="MainWindow"
         ShowInTaskbar="False"
         Height="Auto"
+        TextOptions.TextFormattingMode="Ideal"
         Width="500"
-        
         Background="Transparent"
         AllowsTransparency="True">
 
     <!-- Resources -->
     <Window.Resources>
-        <!--<LinearGradientBrush x:Key="MidnightGlassSoftBrush"
-                             StartPoint="0,0"
-                             EndPoint="0,1">
-            -->
-        <!-- Bright, soft top -->
-        <!--
-            <GradientStop Color="#FFDDE6FF"
-                          Offset="0.0" />
-            -->
-        <!-- very pale blue-lavender -->
-        <!--
-            <GradientStop Color="#FFBBCDFF"
-                          Offset="0.25" />
-            -->
-        <!-- soft pastel periwinkle -->
-
-        <!-- Vibrant mid glow -->
-        <!--
-            <GradientStop Color="#FF7F7FFF"
-                          Offset="0.45" />
-            -->
-        <!-- saturated bright purple-blue -->
-        <!--
-            <GradientStop Color="#FF5F5FFF"
-                          Offset="0.6" />
-            -->
-        <!-- deeper, vivid violet -->
-
-        <!-- Bold lower fade -->
-        <!--
-            <GradientStop Color="#FF3F3FAF"
-                          Offset="0.8" />
-            -->
-        <!-- deep saturated purple -->
-        <!--
-            <GradientStop Color="#FF1A1A5A"
-                          Offset="1.0" />
-            -->
-        <!-- rich dark midnight blue -->
-        <!--
-        </LinearGradientBrush>-->
-
-
         <LinearGradientBrush x:Key="AmberGlassBrush"
                              StartPoint="0,0"
                              EndPoint="0,1">
@@ -171,7 +128,30 @@
             <Setter Property="FontSize"
                     Value="16" />
             <Setter Property="FontFamily"
-                    Value="Calibri" />
+                    Value="Segoe UI" />
+        </Style>
+
+        <Style x:Key="VolumeText"
+               TargetType="TextBlock">
+            <Setter Property="Foreground"
+                    Value="#E0E0E0" />
+            <Setter Property="FontSize"
+                    Value="14" />
+            <Setter Property="FontFamily"
+                    Value="Segoe UI" />
+            <Setter Property="Width"
+                    Value="30" />
+        </Style>
+        
+        <Style x:Key="GroupText"
+               TargetType="TextBlock">
+            <Setter Property="Foreground"
+                    Value="#E0E0E0" />
+            <Setter Property="FontSize"
+                    Value="18" />
+            <Setter Property="FontFamily"
+                    Value="Segoe UI Semibold" />
+ 
         </Style>
 
         <!-- ProgressBar style with vertical gradient -->
@@ -205,6 +185,28 @@
                     Value="Black" />
         </Style>
 
+        <Style x:Key="GroupBorderStyle"
+               TargetType="Border">
+            <Setter Property="BorderBrush"
+                    Value="#444" />
+            <Setter Property="CornerRadius"
+                    Value="4" />
+            <Setter Property="BorderThickness"
+                    Value="1" />
+            <Setter Property="Margin"
+                    Value="0,10,0,0" />
+            <Setter Property="Padding"
+                    Value="10" />
+        </Style>
+
+
+        <Style x:Key="ProgressBorderStyle"
+               TargetType="Border">
+            <Setter Property="BorderBrush"
+                    Value="Black" />
+            <Setter Property="BorderThickness"
+                    Value="1" />
+        </Style>
 
         <wpf:SelectedStyleMultiConverter x:Key="ProgressBarStyleSelector"
                                          NormalStyle="{StaticResource GradientProgressBar}"
@@ -213,22 +215,22 @@
 
     <!-- Main border with drop shadow -->
     <Border CornerRadius="10"
-            Padding="10"
+            Padding="15"
             Margin="16"
             Background="{StaticResource BorderGradient}"
             SnapsToDevicePixels="True"
             x:Name="LayoutRoot"
-            VerticalAlignment="Bottom">
+            VerticalAlignment="Bottom" >
 
         <Border.Effect>
             <DropShadowEffect Color="Black"
-                              BlurRadius="20"
+                              BlurRadius="10"
                               ShadowDepth="0"
                               Opacity="0.7" />
         </Border.Effect>
 
         <StackPanel>
-            <StackPanel>
+            <StackPanel MinWidth="350">
                 <StackPanel.Style>
                     <Style TargetType="StackPanel">
                         <Setter Property="Visibility"
@@ -250,16 +252,13 @@
 
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Style="{StaticResource LightText}"
-                                   FontFamily="Segoe UI"
                                    FontSize="24"
-                                   Margin="0,0,0,10"
                                    Text="🎶SONOSK" />
                         <TextBlock Style="{StaticResource LightText}"
                                    Foreground="#555"
-                                   FontFamily="Segoe UI"
                                    FontSize="20"
-                                   Margin="0,0,0,11"
                                    Text="ontroller"
+                                   Margin="0,0,0,1"
                                    VerticalAlignment="Bottom" />
                     </StackPanel>
 
@@ -277,11 +276,7 @@
                 <ItemsControl ItemsSource="{Binding Groups}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border BorderBrush="#444"
-                                    CornerRadius="2"
-                                    BorderThickness="1"
-                                    Margin="0,0,0,20"
-                                    Padding="10">
+                            <Border Style="{StaticResource GroupBorderStyle}">
                                 <StackPanel>
                                     <StackPanel.InputBindings>
                                         <MouseBinding MouseAction="LeftClick"
@@ -289,11 +284,10 @@
                                                       CommandParameter="{Binding}" />
                                     </StackPanel.InputBindings>
                                     <!-- Room name and volume text -->
-                                    <TextBlock Style="{StaticResource LightText}"
-                                               FontFamily="Segoe UI Semibold"
-                                               FontSize="18"
+                                    <TextBlock Style="{StaticResource GroupText}"
                                                wpf:MouseWheelBehavior.Command="{Binding MouseScrollCommand}">
-                                            <Run Text="{Binding GroupName}" d:Text="GroupName" />
+                                            <Run Text="{Binding GroupName}"
+                                                 d:Text="GroupName" />
                                     </TextBlock>
 
                                     <Grid Margin="0,5,0,5">
@@ -304,9 +298,8 @@
                                         </Grid.ColumnDefinitions>
 
                                         <!-- Progress bar -->
-                                        <Border BorderThickness="1"
-                                                Margin="0,0,5,0"
-                                                BorderBrush="Black">
+                                        <Border Style="{StaticResource ProgressBorderStyle}"
+                                                Margin="0,0,5,0">
 
                                             <ProgressBar wpf:SliderExtensions.EnableMouseWheel="True"
                                                          wpf:SliderExtensions.EnableDragging="True"
@@ -327,12 +320,11 @@
                                         </Border>
 
 
-                                        <TextBlock Style="{StaticResource LightText}"
+                                        <TextBlock Style="{StaticResource VolumeText}"
                                                    Grid.Column="2"
-                                                   Width="40"
                                                    TextAlignment="Right">
                                             <Run Text="{Binding Volume, StringFormat={}{0}%}"
-                                            d:Text="100%" />
+                                                 d:Text="100%" />
                                         </TextBlock>
                                     </Grid>
 
@@ -371,15 +363,14 @@
                                                                Grid.Column="0"
                                                                MinWidth="80"
                                                                TextAlignment="Left"
-                                                               FontFamily="Segoe UI"
                                                                wpf:MouseWheelBehavior.Command="{Binding MouseScrollCommand}">
-                                                            <Run Text="{Binding Name}" d:Text="Name" />
+                                                            <Run Text="{Binding Name}"
+                                                                 d:Text="Name" />
                                                     </TextBlock>
 
-                                                    <Border BorderThickness="1"
-                                                            Grid.Column="1"
+                                                    <Border Grid.Column="1"
                                                             Margin="5,0,5,0"
-                                                            BorderBrush="Black">
+                                                            Style="{StaticResource ProgressBorderStyle}">
                                                         <!-- Progress bar -->
                                                         <ProgressBar wpf:SliderExtensions.EnableMouseWheel="True"
                                                                      wpf:SliderExtensions.EnableDragging="True"
@@ -401,13 +392,11 @@
 
                                                     </Border>
 
-
-                                                    <TextBlock Style="{StaticResource LightText}"
+                                                    <TextBlock Style="{StaticResource VolumeText}"
                                                                Grid.Column="3"
-                                                               Width="40"
+                                                               
                                                                TextAlignment="Right">
-                                                <Run Text="{Binding Volume, StringFormat={}{0}%}"
-                                                        d:Text="9%" />
+                                                        <Run Text="{Binding Volume, StringFormat={}{0}%}" d:Text="9%" />
                                                     </TextBlock>
                                                 </Grid>
                                             </DataTemplate>
@@ -420,18 +409,22 @@
                 </ItemsControl>
             </StackPanel>
 
-            <Border
-                    Padding="10" 
+            <Border Padding="5,0,5,0" MinWidth="300"
                     DataContext="{Binding SelectedViewModel}">
                 <Border.Style>
                     <Style TargetType="Border">
-                        <Setter Property="Visibility" Value="Visible" />
+                        <Setter Property="Visibility"
+                                Value="Visible" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding}" Value="{x:Null}">
-                                <Setter Property="Visibility" Value="Collapsed" />
+                            <DataTrigger Binding="{Binding}"
+                                         Value="{x:Null}">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding DataContext.IsSmallView, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
-                                <Setter Property="Visibility" Value="Collapsed" />
+                            <DataTrigger Binding="{Binding DataContext.IsSmallView, RelativeSource={RelativeSource AncestorType=Window}}"
+                                         Value="False">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
@@ -444,11 +437,8 @@
                                       CommandParameter="{Binding}" />
                     </StackPanel.InputBindings>
                     <!-- Room name and volume text -->
-                    <TextBlock Style="{StaticResource LightText}"
-                               FontFamily="Segoe UI Semibold"
-                               FontSize="18">
-                            <Run Text="{Binding Name, Mode=OneWay}"
-                        d:Text="GroupName" />
+                    <TextBlock Style="{StaticResource GroupText}">
+                            <Run Text="{Binding Name, Mode=OneWay}"                               d:Text="GroupName" />
                     </TextBlock>
 
                     <Grid Margin="0,5,0,5">
@@ -482,17 +472,16 @@
                         </Border>
 
 
-                        <TextBlock Style="{StaticResource LightText}"
+                        <TextBlock Style="{StaticResource VolumeText}"
                                    Grid.Column="2"
-                                   Width="40"
                                    TextAlignment="Right">
                                 <Run Text="{Binding Volume, StringFormat={}{0}%}"
-                            d:Text="100%" />
+                                     d:Text="100%" />
                         </TextBlock>
                     </Grid>
                 </StackPanel>
             </Border>
-            
+
         </StackPanel>
     </Border>
 </Window>

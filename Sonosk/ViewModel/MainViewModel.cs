@@ -1,8 +1,6 @@
 ﻿using Sonosk.Sonos;
 using Sonosk.Wpf;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Windows;
 using System.Windows.Input;
 
 namespace Sonosk.ViewModel
@@ -142,13 +140,12 @@ namespace Sonosk.ViewModel
         {
             get
             {
-                refreshCommand ??= new RelayCommand(RefreshHandler);
-
+                refreshCommand ??= new AsyncRelayCommand(RefreshHandler);
                 return refreshCommand;
             }
         }
 
-        private async void RefreshHandler(object? obj)
+        private async Task RefreshHandler(object? obj)
         {
             await Refresh(5);
         }

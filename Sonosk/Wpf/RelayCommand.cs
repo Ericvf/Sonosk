@@ -3,6 +3,51 @@ using System.Windows.Input;
 
 namespace Sonosk.Wpf
 {
+    public class AsyncRelayCommand : ICommand
+    {
+        readonly Func<object?, Task> _executeAsync;
+        readonly Predicate<object?>? _canExecute;
+
+        public AsyncRelayCommand(Func<object?, Task> executeAsync)
+            : this(executeAsync, null)
+        { }
+
+        public AsyncRelayCommand(Func<object?, Task> executeAsync, Predicate<object?>? canExecute)
+        {
+            _executeAsync = executeAsync ?? throw new ArgumentNullException(nameof(executeAsync));
+            _canExecute = canExecute;
+        }
+
+        [DebuggerStepThrough]
+        public bool CanExecute(object? parameter)
+        {
+            return _canExecute == null || _canExecute(parameter);
+        }
+
+        public event EventHandler? CanExecuteChanged
+        {
+            add { CommandManager.RequerySuggested += value; }
+            remove { CommandManager.RequerySuggested -= value; }
+        }
+
+        // ICommand requires void Execute — use async void but surface Task via ExecuteAsync for callers/tests.
+        public async void Execute(object? parameter)
+        {
+            try
+            {
+                await _executeAsync(parameter).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+                throw;
+            }
+        }
+
+        public Task ExecuteAsync(object? parameter) => _executeAsync(parameter);
+    }
+
+
     public class RelayCommand : ICommand
     {
         #region Fields
