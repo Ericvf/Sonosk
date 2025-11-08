@@ -10,6 +10,7 @@
         ResizeMode="NoResize"
         WindowStartupLocation="Manual"
         Title="MainWindow"
+        ShowInTaskbar="False"
         Height="Auto"
         Width="500"
         d:DataContext="{d:DesignInstance Type=local:MainViewModel, IsDesignTimeCreatable=True}"
@@ -21,29 +22,43 @@
         <!--<LinearGradientBrush x:Key="MidnightGlassSoftBrush"
                              StartPoint="0,0"
                              EndPoint="0,1">
-            --><!-- Bright, soft top --><!--
+            -->
+        <!-- Bright, soft top -->
+        <!--
             <GradientStop Color="#FFDDE6FF"
                           Offset="0.0" />
-            --><!-- very pale blue-lavender --><!--
+            -->
+        <!-- very pale blue-lavender -->
+        <!--
             <GradientStop Color="#FFBBCDFF"
                           Offset="0.25" />
-            --><!-- soft pastel periwinkle -->
+            -->
+        <!-- soft pastel periwinkle -->
 
-            <!-- Vibrant mid glow --><!--
+        <!-- Vibrant mid glow -->
+        <!--
             <GradientStop Color="#FF7F7FFF"
                           Offset="0.45" />
-            --><!-- saturated bright purple-blue --><!--
+            -->
+        <!-- saturated bright purple-blue -->
+        <!--
             <GradientStop Color="#FF5F5FFF"
                           Offset="0.6" />
-            --><!-- deeper, vivid violet -->
+            -->
+        <!-- deeper, vivid violet -->
 
-            <!-- Bold lower fade --><!--
+        <!-- Bold lower fade -->
+        <!--
             <GradientStop Color="#FF3F3FAF"
                           Offset="0.8" />
-            --><!-- deep saturated purple --><!--
+            -->
+        <!-- deep saturated purple -->
+        <!--
             <GradientStop Color="#FF1A1A5A"
                           Offset="1.0" />
-            --><!-- rich dark midnight blue --><!--
+            -->
+        <!-- rich dark midnight blue -->
+        <!--
         </LinearGradientBrush>-->
 
 
@@ -192,8 +207,8 @@
 
 
         <wpf:SelectedStyleMultiConverter x:Key="ProgressBarStyleSelector"
-                                           NormalStyle="{StaticResource GradientProgressBar}"
-                                           SelectedStyle="{StaticResource SelectedGradientProgressBar}" />
+                                         NormalStyle="{StaticResource GradientProgressBar}"
+                                         SelectedStyle="{StaticResource SelectedGradientProgressBar}" />
     </Window.Resources>
 
     <!-- Main border with drop shadow -->
@@ -213,184 +228,271 @@
         </Border.Effect>
 
         <StackPanel>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <StackPanel>
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Setter Property="Visibility"
+                                Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSmallView}"
+                                         Value="True">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Style="{StaticResource LightText}"
-                               FontFamily="Segoe UI"
-                               FontSize="24"
-                               Margin="0,0,0,10"
-                               Text="🎶SONOSK" />
-                    <TextBlock Style="{StaticResource LightText}"
-                               Foreground="#555"
-                               FontFamily="Segoe UI"
-                               FontSize="20"
-                               Margin="0,0,0,11"
-                               Text="ontroller"
-                               VerticalAlignment="Bottom" />
-                </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource LightText}"
+                                   FontFamily="Segoe UI"
+                                   FontSize="24"
+                                   Margin="0,0,0,10"
+                                   Text="🎶SONOSK" />
+                        <TextBlock Style="{StaticResource LightText}"
+                                   Foreground="#555"
+                                   FontFamily="Segoe UI"
+                                   FontSize="20"
+                                   Margin="0,0,0,11"
+                                   Text="ontroller"
+                                   VerticalAlignment="Bottom" />
+                    </StackPanel>
 
-                <Image x:Name="refresh"
-                       Width="24"
-                       Height="24"
-                       VerticalAlignment="Top"
-                       Grid.Column="1"
-                       Stretch="Uniform"
-                       RenderTransformOrigin="0.5,0.5"
-                       Source="/Resources/refresh.png" />
+                    <Image x:Name="refresh"
+                           Width="24"
+                           Height="24"
+                           VerticalAlignment="Top"
+                           Grid.Column="1"
+                           Stretch="Uniform"
+                           RenderTransformOrigin="0.5,0.5"
+                           Source="/Resources/refresh.png" />
 
-            </Grid>
+                </Grid>
 
-            <ItemsControl ItemsSource="{Binding Groups}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border BorderBrush="#444"
-                                CornerRadius="2"
-                                BorderThickness="1"
-                                Margin="0,0,0,20"
-                                Padding="10">
-                            <StackPanel >
-                                <StackPanel.InputBindings>
-                                    <MouseBinding MouseAction="LeftClick"
-                                                  Command="{Binding DataContext.SelectDeviceCommand,
-                                        RelativeSource={RelativeSource AncestorType=Window}}"
-                                                  CommandParameter="{Binding}" />
-                                </StackPanel.InputBindings>
-                                <!-- Room name and volume text -->
-                                <TextBlock Style="{StaticResource LightText}"
-                                           FontFamily="Segoe UI Semibold"
-                                           FontSize="18">
-                                <Run Text="{Binding GroupName}"
-                                     d:Text="GroupName" />
-                                </TextBlock>
-
-                                <Grid Margin="0,5,0,5">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <!-- Progress bar -->
-                                    <Border BorderThickness="1"
-                                            Margin="0,0,5,0" 
-                                            BorderBrush="Black">
-
-                                        <ProgressBar wpf:SliderExtensions.EnableMouseWheel="True"
-                                                     wpf:SliderExtensions.EnableDragging="True"
-                                                     SmallChange="0.005"
-                                                     Value="{Binding Volume, Mode=TwoWay}"
-                                                     d:Value="50"
-                                                     Maximum="100">
-                                            <ProgressBar.Style>
-                                                <MultiBinding Converter="{StaticResource ProgressBarStyleSelector}">
-                                                    <!-- Current item -->
-                                                    <Binding />
-                                                    <!-- SelectedViewModel from Window DataContext -->
-                                                    <Binding Path="DataContext.SelectedViewModel"
-                                                             RelativeSource="{RelativeSource AncestorType=Window}" />
-                                                </MultiBinding>
-                                            </ProgressBar.Style>
-                                        </ProgressBar>
-                                    </Border>
-
-
+                <ItemsControl ItemsSource="{Binding Groups}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="#444"
+                                    CornerRadius="2"
+                                    BorderThickness="1"
+                                    Margin="0,0,0,20"
+                                    Padding="10">
+                                <StackPanel>
+                                    <StackPanel.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick"
+                                                      Command="{Binding DataContext.SelectDeviceCommand,RelativeSource={RelativeSource AncestorType=Window}}"
+                                                      CommandParameter="{Binding}" />
+                                    </StackPanel.InputBindings>
+                                    <!-- Room name and volume text -->
                                     <TextBlock Style="{StaticResource LightText}"
-                                               Grid.Column="2"
-                                               Width="40"
-                                               TextAlignment="Right">
-                                    <Run Text="{Binding Volume, StringFormat={}{0}%}"
-                                         d:Text="100%" />
+                                               FontFamily="Segoe UI Semibold"
+                                               FontSize="18">
+                                <Run Text="{Binding GroupName}"
+                                        d:Text="GroupName" />
                                     </TextBlock>
-                                </Grid>
 
-                                <ItemsControl ItemsSource="{Binding Devices}">
-                                    <ItemsControl.Style>
-                                        <Style TargetType="ItemsControl">
-                                            <Setter Property="Visibility"
-                                                    Value="Visible" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Devices.Count}"
-                                                             Value="1">
-                                                    <Setter Property="Visibility"
-                                                            Value="Collapsed" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </ItemsControl.Style>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="0,0,0,5">
-                                                <Grid.InputBindings>
-                                                    <MouseBinding MouseAction="LeftClick"
-                                                                  Command="{Binding DataContext.SelectDeviceCommand,
+                                    <Grid Margin="0,5,0,5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Progress bar -->
+                                        <Border BorderThickness="1"
+                                                Margin="0,0,5,0"
+                                                BorderBrush="Black">
+
+                                            <ProgressBar wpf:SliderExtensions.EnableMouseWheel="True"
+                                                         wpf:SliderExtensions.EnableDragging="True"
+                                                         SmallChange="0.005"
+                                                         Value="{Binding Volume, Mode=TwoWay}"
+                                                         d:Value="50"
+                                                         Maximum="100">
+                                                <ProgressBar.Style>
+                                                    <MultiBinding Converter="{StaticResource ProgressBarStyleSelector}">
+                                                        <!-- Current item -->
+                                                        <Binding />
+                                                        <!-- SelectedViewModel from Window DataContext -->
+                                                        <Binding Path="DataContext.SelectedViewModel"
+                                                                 RelativeSource="{RelativeSource AncestorType=Window}" />
+                                                    </MultiBinding>
+                                                </ProgressBar.Style>
+                                            </ProgressBar>
+                                        </Border>
+
+
+                                        <TextBlock Style="{StaticResource LightText}"
+                                                   Grid.Column="2"
+                                                   Width="40"
+                                                   TextAlignment="Right">
+                                            <Run Text="{Binding Volume, StringFormat={}{0}%}"
+                                            d:Text="100%" />
+                                        </TextBlock>
+                                    </Grid>
+
+                                    <ItemsControl ItemsSource="{Binding Devices}">
+                                        <ItemsControl.Style>
+                                            <Style TargetType="ItemsControl">
+                                                <Setter Property="Visibility"
+                                                        Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Devices.Count}"
+                                                                 Value="1">
+                                                        <Setter Property="Visibility"
+                                                                Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ItemsControl.Style>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,5">
+                                                    <Grid.InputBindings>
+                                                        <MouseBinding MouseAction="LeftClick"
+                                                                      Command="{Binding DataContext.SelectDeviceCommand,
                                                                              RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                  CommandParameter="{Binding}" />
-                                                </Grid.InputBindings>
-                                                
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
+                                                                      CommandParameter="{Binding}" />
+                                                    </Grid.InputBindings>
 
-                                                <TextBlock Style="{StaticResource LightText}"
-                                                           Grid.Column="0"
-                                                           MinWidth="80"
-                                                           TextAlignment="Left">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock Style="{StaticResource LightText}"
+                                                               Grid.Column="0"
+                                                               MinWidth="80"
+                                                               TextAlignment="Left">
                                                     <Run Text="{Binding Name}"
                                                          d:Text="Name"
                                                          FontFamily="Segoe UI" />
-                                                </TextBlock>
+                                                    </TextBlock>
 
-                                                <Border BorderThickness="1"
-                                                        Grid.Column="1"
-                                                        Margin="5,0,5,0"
-                                                        BorderBrush="Black">
-                                                    <!-- Progress bar -->
-                                                    <ProgressBar wpf:SliderExtensions.EnableMouseWheel="True"
-                                                                 wpf:SliderExtensions.EnableDragging="True"
-                                                                 SmallChange="0.005"
-                                                                 Value="{Binding Volume, Mode=TwoWay}"
-                                                                 d:Value="50"
-                                                                 Maximum="100">
-                                                        <ProgressBar.Style>
-                                                            <MultiBinding Converter="{StaticResource ProgressBarStyleSelector}">
-                                                                <!-- Current item -->
-                                                                <Binding />
-                                                                <!-- SelectedViewModel from Window DataContext -->
-                                                                <Binding Path="DataContext.SelectedViewModel"
-                                                                         RelativeSource="{RelativeSource AncestorType=Window}" />
-                                                            </MultiBinding>
-                                                        </ProgressBar.Style>
-                                                    </ProgressBar>
+                                                    <Border BorderThickness="1"
+                                                            Grid.Column="1"
+                                                            Margin="5,0,5,0"
+                                                            BorderBrush="Black">
+                                                        <!-- Progress bar -->
+                                                        <ProgressBar wpf:SliderExtensions.EnableMouseWheel="True"
+                                                                     wpf:SliderExtensions.EnableDragging="True"
+                                                                     SmallChange="0.005"
+                                                                     Value="{Binding Volume, Mode=TwoWay}"
+                                                                     d:Value="50"
+                                                                     Maximum="100">
+                                                            <ProgressBar.Style>
+                                                                <MultiBinding Converter="{StaticResource ProgressBarStyleSelector}">
+                                                                    <!-- Current item -->
+                                                                    <Binding />
+                                                                    <!-- SelectedViewModel from Window DataContext -->
+                                                                    <Binding Path="DataContext.SelectedViewModel"
+                                                                             RelativeSource="{RelativeSource AncestorType=Window}" />
+                                                                </MultiBinding>
+                                                            </ProgressBar.Style>
+                                                        </ProgressBar>
 
 
-                                                </Border>
+                                                    </Border>
 
-                                                
-                                                <TextBlock Style="{StaticResource LightText}"
-                                                           Grid.Column="3"
-                                                           Width="40"
-                                                           TextAlignment="Right">
+
+                                                    <TextBlock Style="{StaticResource LightText}"
+                                                               Grid.Column="3"
+                                                               Width="40"
+                                                               TextAlignment="Right">
                                                 <Run Text="{Binding Volume, StringFormat={}{0}%}"
-                                                     d:Text="9%" />
-                                                </TextBlock>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </StackPanel>
+                                                        d:Text="9%" />
+                                                    </TextBlock>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
 
+            <Border
+                    Padding="10" 
+                    DataContext="{Binding SelectedViewModel}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding DataContext.IsSmallView, RelativeSource={RelativeSource AncestorType=Window}}" Value="False">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                
+                <StackPanel>
+                    <StackPanel.InputBindings>
+                        <MouseBinding MouseAction="LeftClick"
+                                      Command="{Binding DataContext.SelectDeviceCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                      CommandParameter="{Binding}" />
+                    </StackPanel.InputBindings>
+                    <!-- Room name and volume text -->
+                    <TextBlock Style="{StaticResource LightText}"
+                               FontFamily="Segoe UI Semibold"
+                               FontSize="18">
+                            <Run Text="{Binding Name, Mode=OneWay}"
+                        d:Text="GroupName" />
+                    </TextBlock>
+
+                    <Grid Margin="0,5,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Progress bar -->
+                        <Border BorderThickness="1"
+                                Margin="0,0,5,0"
+                                BorderBrush="Black">
+
+                            <ProgressBar wpf:SliderExtensions.EnableMouseWheel="True"
+                                         wpf:SliderExtensions.EnableDragging="True"
+                                         SmallChange="0.005"
+                                         Value="{Binding Volume, Mode=TwoWay}"
+                                         d:Value="50"
+                                         Maximum="100">
+                                <ProgressBar.Style>
+                                    <MultiBinding Converter="{StaticResource ProgressBarStyleSelector}">
+                                        <!-- Current item -->
+                                        <Binding />
+                                        <!-- SelectedViewModel from Window DataContext -->
+                                        <Binding Path="DataContext.SelectedViewModel"
+                                                 RelativeSource="{RelativeSource AncestorType=Window}" />
+                                    </MultiBinding>
+                                </ProgressBar.Style>
+                            </ProgressBar>
+                        </Border>
+
+
+                        <TextBlock Style="{StaticResource LightText}"
+                                   Grid.Column="2"
+                                   Width="40"
+                                   TextAlignment="Right">
+                                <Run Text="{Binding Volume, StringFormat={}{0}%}"
+                            d:Text="100%" />
+                        </TextBlock>
+                    </Grid>
+                </StackPanel>
+            </Border>
+            
+        </StackPanel>
     </Border>
 </Window>

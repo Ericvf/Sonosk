@@ -34,25 +34,33 @@ namespace Sonosk.TrayIcon
         private const int WM_MOUSEWHEEL = 0x020A;
         private const int WH_MOUSE_LL = 14;
 
-        private nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
-        {
-            if (msg == TrayIconHelper.WM_USER)
-            {
-                switch ((int)lParam)
-                {
-                    case WM_LBUTTONDOWN:
-                        Clicked?.Invoke(this, EventArgs.Empty);
-                        handled = true;
-                        break;
-                    case WM_RBUTTONDOWN:
-                        RightClicked?.Invoke(this, EventArgs.Empty);
-                        handled = true;
-                        break;
-                }
+        const int WM_APP = 0x8000;
+        const int WM_APP_ACTIVATE = WM_APP + 1;
 
-                return 1;
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            switch (msg)
+            {
+                case TrayIconHelper.WM_USER:
+                    switch ((int)lParam)
+                    {
+                        case WM_LBUTTONDOWN:
+                            Clicked?.Invoke(this, EventArgs.Empty);
+                            handled = true;
+                            break;
+                        case WM_RBUTTONDOWN:
+                            RightClicked?.Invoke(this, EventArgs.Empty);
+                            handled = true;
+                            break;
+                    }
+                    break;
+
+                case WM_APP_ACTIVATE:
+                    handled = true;
+                    break;
             }
-            return nint.Zero;
+
+            return IntPtr.Zero;
         }
 
         private nint HookCallback(int nCode, nint wParam, nint lParam)
@@ -65,8 +73,7 @@ namespace Sonosk.TrayIcon
                 var cursor = new Point(hookStruct.pt.x, hookStruct.pt.y);
                 if (IsMouseOverTrayIcon(cursor))
                 {
-                    if (delta > 0) mainViewModel.IncreaseVolume(1);
-                    else if (delta < 0) mainViewModel.DecreaseVolume(1);
+                    MouseScroll?.Invoke(this, new DeltaEventArgs(delta));
                 }
             }
             return CallNextHookEx(hookId, nCode, wParam, lParam);
@@ -91,6 +98,17 @@ namespace Sonosk.TrayIcon
 
         public event EventHandler<EventArgs> Clicked;
         public event EventHandler<EventArgs> RightClicked;
+        public event EventHandler<DeltaEventArgs> MouseScroll;
+
+        public class DeltaEventArgs : EventArgs
+        {
+            public int Delta { get; }
+
+            public DeltaEventArgs(int delta)
+            {
+                Delta = delta;
+            }
+        }
 
         #region Native
 

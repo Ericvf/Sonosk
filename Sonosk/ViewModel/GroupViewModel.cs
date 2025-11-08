@@ -10,9 +10,11 @@ namespace Sonosk.ViewModel
 
         void DecreaseVolume(int delta);
 
-        public string? Name { get;  }
+        int Volume { get; set; }
 
-        public string BaseUri { get;}
+        string? Name { get; }
+
+        string BaseUri { get;}
     }
 
     public class GroupViewModel : BaseViewModel, IGroupOrDeviceViewModel

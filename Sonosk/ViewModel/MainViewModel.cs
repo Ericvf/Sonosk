@@ -38,6 +38,35 @@ namespace Sonosk.ViewModel
             }
         }
 
+        private bool isSmallView;
+        public bool IsSmallView
+        {
+            get { return isSmallView; }
+            set
+            {
+                if (isSmallView != value)
+                {
+                    isSmallView = value;
+                    OnPropertyChanged(nameof(IsSmallView));
+                }
+            }
+        }
+
+
+        private bool isActivated;
+        public bool IsActivated
+        {
+            get { return isActivated; }
+            set
+            {
+                if (isActivated != value)
+                {
+                    isActivated = value;
+                    OnPropertyChanged(nameof(IsActivated));
+                }
+            }
+        }
+
         private IGroupOrDeviceViewModel selectedViewModel;
         public IGroupOrDeviceViewModel SelectedViewModel
         {

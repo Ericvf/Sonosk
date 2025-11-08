@@ -1,6 +1,9 @@
 ﻿using AnimationExtensions;
 using Sonosk.ViewModel;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Interop;
 using System.Windows.Threading;
 
 namespace Sonosk
@@ -9,12 +12,14 @@ namespace Sonosk
     public partial class MainWindow : Window
     {
         private readonly MainViewModel mainViewModel;
+        private readonly SingleEventTimer singleEventTimer;
         private bool isVisiblityToggle = true;
-        private Animation showAnimation, hideAnimation;
+        private Animation hideAnimation, showAnimation;
 
-        public MainWindow(MainViewModel mainViewModel)
+        public MainWindow(MainViewModel mainViewModel, SingleEventTimer singleEventTimer)
         {
             this.mainViewModel = mainViewModel;
+            this.singleEventTimer = singleEventTimer;
             DataContext = mainViewModel;
 
             InitializeComponent();
@@ -30,8 +35,8 @@ namespace Sonosk
             mainViewModel.LoadingEnded += () => Dispatcher.BeginInvoke(() => loadingEnded.Play());
 
             this.Loaded += Window_Loaded;
-            Activated += (s, e) => this.IsActivated();
-            Deactivated += (s, e) => this.IsDeactivated();
+            Activated += (s, e) => IsActivated();
+            Deactivated += (s, e) => IsDeactivated();
         }
 
         protected async override void OnInitialized(EventArgs e)
@@ -57,16 +62,16 @@ namespace Sonosk
         {
             if (!isVisiblityToggle)
             {
-                hideAnimation?.Stop();
+                isVisiblityToggle = true;
                 showAnimation?.Stop();
-                showAnimation = LayoutRoot
+                hideAnimation?.Stop();
+                hideAnimation = LayoutRoot
                     .Fade(0, 300, Eq.OutSine)
                     .Move(0, 100, 200, Eq.InBack)
-                    .Wait(100)
                     .ThenDo(d =>
                     {
                         Hide();
-                        isVisiblityToggle = true;
+                        mainViewModel.IsActivated = false;
                     })
                 .Play();
             }
@@ -77,20 +82,69 @@ namespace Sonosk
             if (isVisiblityToggle)
             {
                 PositionWindowBottomRight();
-                isVisiblityToggle = false;
-                Show();
                 Activate();
 
-                showAnimation?.Stop();
+                isVisiblityToggle = false;
                 hideAnimation?.Stop();
-
-                hideAnimation = LayoutRoot.Fade(0).Fade(1, 200, Eq.OutSine)
+                showAnimation?.Stop();
+                singleEventTimer.Cancel();
+                showAnimation = LayoutRoot.Fade(0).Fade(1, 200, Eq.OutSine)
                     .Move(0, 100)
                     .Move(0, 0, 200, Eq.OutBack)
+                    .ThenDo(d =>
+                    {
+                        mainViewModel.IsActivated = true;
+                        if (mainViewModel.IsSmallView)
+                        {
+                            singleEventTimer.Queue(1000, () =>
+                            {
+                                Dispatcher.BeginInvoke(() =>
+                                {
+                                    IsDeactivated();
+                                });
+                                return Task.CompletedTask;
+                            });
+                        }
+                        
+                    })
                     .Play();
 
-                mainViewModel.Refresh(2);
+                if (!mainViewModel.IsSmallView)
+                {
+                    mainViewModel.Refresh(2);
+                }
             }
         }
+
+        public static void ActivateWindow(Window window)
+        {
+            var hwnd = new WindowInteropHelper(window).EnsureHandle();
+
+            var threadId1 = GetWindowThreadProcessId(GetForegroundWindow(), IntPtr.Zero);
+            var threadId2 = GetWindowThreadProcessId(hwnd, IntPtr.Zero);
+
+            if (threadId1 != threadId2)
+            {
+                AttachThreadInput(threadId1, threadId2, true);
+                SetForegroundWindow(hwnd);
+                AttachThreadInput(threadId1, threadId2, false);
+            }
+            else
+                SetForegroundWindow(hwnd);
+        }
+
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        public static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr ProcessId);
+
+        [DllImport("user32.dll")]
+        public static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+
     }
 }
