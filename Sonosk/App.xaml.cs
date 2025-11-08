@@ -45,9 +45,12 @@ namespace Sonosk
 
             void TrayIcon_Clicked(object? sender, EventArgs e)
             {
-                mainWindow.Activate();
-                mainWindow.Show();
-                mainViewModel.IsSmallView = false;
+                if (!mainViewModel.IsActivated || mainViewModel.IsSmallView)
+                {
+                    mainWindow.Activate();
+                    mainWindow.Show();
+                    mainViewModel.IsSmallView = false;
+                }
             }
 
             void TrayIcon_MouseScroll(object? sender, TrayIconService.DeltaEventArgs e)
@@ -56,7 +59,7 @@ namespace Sonosk
                 {
                     mainViewModel.IsSmallView = true;
                 }
-                
+
                 if (e.Delta > 0) mainViewModel.IncreaseVolume(1);
                 else if (e.Delta < 0) mainViewModel.DecreaseVolume(1);
 
