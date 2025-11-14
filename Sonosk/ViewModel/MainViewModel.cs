@@ -249,9 +249,11 @@ namespace Sonosk.ViewModel
                                 memberViewModel.Group = existingGroup;
 
                                 var volume = await GetZoneGroupMemberVolume(zoneGroupDevice);
-                                memberViewModel.SetVolumeUI(volume);
-
-                                existingGroup.Devices.Add(memberViewModel);
+                                if (volume > -1)
+                                {
+                                    memberViewModel.SetVolumeUI(volume);
+                                    existingGroup.Devices.Add(memberViewModel);
+                                }
                             }
                             else
                             {
@@ -283,9 +285,11 @@ namespace Sonosk.ViewModel
                             memberViewModel.Group = groupViewModel;
 
                             var volume = await GetZoneGroupMemberVolume(zoneGroupDevice);
-                            memberViewModel.SetVolumeUI(volume);
-
-                            groupViewModel.Devices.Add(memberViewModel);
+                            if (volume > -1)
+                            {
+                                memberViewModel.SetVolumeUI(volume);
+                                groupViewModel.Devices.Add(memberViewModel);
+                            }
                         }
 
                         groupViewModel.CalculateVolumeUI();
@@ -304,7 +308,7 @@ namespace Sonosk.ViewModel
             }
         }
 
-        private async Task<int> GetZoneGroupMemberVolume(ZoneGroupStateZoneGroupZoneGroupMember groupMember)
+        private Task<int> GetZoneGroupMemberVolume(ZoneGroupStateZoneGroupZoneGroupMember groupMember)
         {
             var uri = new Uri(groupMember.Location);
             var device2 = new SonosDevice()
@@ -312,8 +316,7 @@ namespace Sonosk.ViewModel
                 BaseUri = $"{uri.Scheme}://{uri.Host}:{uri.Port}",
             };
 
-            var volume = await sonosDiscoverService.GetVolume(device2);
-            return volume;
+            return sonosDiscoverService.GetVolume(device2);
         }
 
         private async Task UpdateAllVolumes()

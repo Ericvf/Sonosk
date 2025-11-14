@@ -2,9 +2,11 @@
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading.Channels;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 
@@ -13,30 +15,72 @@ namespace Sonosk.Sonos
     public class SonosDiscoverService
     {
         private readonly IPEndPoint multicastEndPoint;
-        private readonly IPEndPoint localEndPoint;
+        private readonly IEnumerable<IPEndPoint> localEndpoints;
         private readonly HttpClient httpClient;
 
         public SonosDiscoverService(IHttpClientFactory httpClientFactory)
         {
             httpClient = httpClientFactory.CreateClient();
-            localEndPoint = new IPEndPoint(GetLocalIPAddress(), 1901);
+            httpClient.Timeout = TimeSpan.FromSeconds(2);
+            localEndpoints = GetLocalEndpoints();
             multicastEndPoint = new IPEndPoint(IPAddress.Parse("239.255.255.250"), 1900);
         }
 
-        static IPAddress GetLocalIPAddress()
+        private IEnumerable<IPEndPoint> GetLocalEndpoints()
         {
-            var host = Dns.GetHostEntry(Dns.GetHostName());
+            var networkInterfaces = NetworkInterface.GetAllNetworkInterfaces()
+                .Where(ni => ni.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up &&
+                             ni.NetworkInterfaceType != System.Net.NetworkInformation.NetworkInterfaceType.Loopback);
 
-            var lanIP = host.AddressList
-                .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip));
+            var physicalIpAddresses =
+                networkInterfaces
+                    .Where(ni =>
+                        ni.OperationalStatus == OperationalStatus.Up &&
+                        ni.NetworkInterfaceType != NetworkInterfaceType.Loopback &&
+                        ni.SupportsMulticast &&
+                        ni.GetIPProperties().GatewayAddresses.Count > 0
+                    )
+                    .SelectMany(ni => ni.GetIPProperties().UnicastAddresses
+                        .Where(ip => ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                        .Select(ip => new { NetworkInterface = ni, IPAddress = ip.Address }));
 
-            if (lanIP == null)
-                throw new Exception("No LAN IPv4 address found.");
+            var ipEndpoints = physicalIpAddresses
+                .Select(x => new IPEndPoint(x.IPAddress, 1901))
+                .ToList();
 
-            return lanIP;
+            return ipEndpoints;
         }
 
         public async IAsyncEnumerable<SonosDevice> Discover(int timeout = 5, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var channel = Channel.CreateUnbounded<SonosDevice>();
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.WhenAll(
+                        localEndpoints.Select(async endpoint =>
+                        {
+                            await foreach (var device in Discover(endpoint, timeout, cancellationToken))
+                            {
+                                await channel.Writer.WriteAsync(device, cancellationToken);
+                            }
+                        }));
+                }
+                finally
+                {
+                    channel.Writer.Complete();
+                }
+            });
+
+            await foreach (var device in channel.Reader.ReadAllAsync(cancellationToken))
+            {
+                yield return device;
+            }
+        }
+
+        private async IAsyncEnumerable<SonosDevice> Discover(IPEndPoint localEndPoint, int timeout = 5, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             using Socket udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             udpSocket.Bind(localEndPoint);
@@ -105,20 +149,28 @@ namespace Sonosk.Sonos
             var content = new StringContent(soap, Encoding.UTF8, "text/xml");
             content.Headers.Add("SOAPAction", @"""urn:schemas-upnp-org:service:RenderingControl:1#GetVolume""");
 
-            var response = await httpClient.PostAsync(uri, content);
-            string xml = await response.Content.ReadAsStringAsync();
+            try
+            {
 
-            XDocument doc = XDocument.Parse(xml);
+                var response = await httpClient.PostAsync(uri, content);
+                string xml = await response.Content.ReadAsStringAsync();
 
-            XNamespace s = "http://schemas.xmlsoap.org/soap/envelope/";
-            XNamespace u = "urn:schemas-upnp-org:service:RenderingControl:1";
+                XDocument doc = XDocument.Parse(xml);
 
-            // Grab the value
-            var currentVolume = doc.Descendants(u + "GetVolumeResponse")
-                                      .Elements("CurrentVolume")
-                                      .FirstOrDefault()?.Value;
+                XNamespace s = "http://schemas.xmlsoap.org/soap/envelope/";
+                XNamespace u = "urn:schemas-upnp-org:service:RenderingControl:1";
 
-            return int.TryParse(currentVolume, out int volume) ? volume : -1;
+                // Grab the value
+                var currentVolume = doc.Descendants(u + "GetVolumeResponse")
+                                          .Elements("CurrentVolume")
+                                          .FirstOrDefault()?.Value;
+
+                return int.TryParse(currentVolume, out int volume) ? volume : -1;
+            }
+            catch
+            {
+                return -1;
+            }
         }
 
         public async Task<int> GetGroupVolume(SonosDevice device)
